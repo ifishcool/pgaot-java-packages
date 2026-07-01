@@ -1,0 +1,197 @@
+# PGAOT Code Auth
+
+[![JDK](https://img.shields.io/badge/JDK-21%2B-blue)](https://adoptium.net/)
+[![License](https://img.shields.io/badge/license-GPL--3.0-green)](LICENSE)
+
+PGAOT平台通用认证框架 — 策略模式 + JWT + 单设备登录 + Redis 持久化，零 Spring 依赖。
+
+---
+
+## 环境要求
+
+- JDK 21+
+- Maven 3.6+
+
+## 安装
+
+**1. 创建 GitHub Token**
+
+Settings → Developer settings → Personal access tokens → Tokens (classic) → 勾选 `read:packages`
+
+**2. 配置 `~/.m2/settings.xml`**
+
+```xml
+<settings>
+    <servers>
+        <server>
+            <id>github</id>
+            <username>你的GitHub用户名</username>
+            <password>你的Token</password>
+        </server>
+    </servers>
+</settings>
+```
+
+**3. pom.xml**
+
+```xml
+<repositories>
+    <repository>
+        <id>github</id>
+        <url>https://maven.pkg.github.com/ifishcool/pgaot-java-packages</url>
+    </repository>
+</repositories>
+
+<dependency>
+    <groupId>com.pgaot</groupId>
+    <artifactId>code-auth</artifactId>
+    <version>1.0.0</version>
+</dependency>
+```
+
+---
+
+## 环境变量
+
+```
+YUNTOWER_APP_ID          # 云塔应用 ID（必填）
+YUNTOWER_APP_SECRET      # 云塔应用密钥（必填）
+CODE_AUTH_JWT_SECRET     # JWT 签名密钥，至少 32 字符（必填）
+CODE_AUTH_REDIS_URI      # Redis 连接地址（必填）
+CODE_AUTH_TOKEN_TTL      # Token 有效秒数（可选，默认 604800 = 7 天）
+CODE_AUTH_KEY_PREFIX     # Redis Key 前缀（可选，默认 login:token）
+```
+
+---
+
+## 快速开始
+
+```java
+import com.pgaot.account.auth.api.LoginEntry;
+import com.pgaot.account.auth.api.LoginType;
+import com.pgaot.account.auth.api.model.LoginResult;
+import com.pgaot.account.auth.api.model.LoginUser;
+import java.util.Map;
+
+// 1. 登录 — 调一次，JWT 自动生成、Redis 自动写入
+LoginResult result = LoginEntry.login(LoginType.YUNTOWER, Map.of("code", "xxx"));
+
+if (result.isSuccess()) {
+    System.out.println("登录成功: " + result.getNickname());
+
+    // 2. 校验 — 验 JWT + 单设备登录检查
+    LoginUser user = LoginEntry.validate(result.getAccessToken());
+
+    // 3. 退出
+    LoginEntry.logout(result.getAccessToken());
+} else {
+    System.out.println("登录失败: [" + result.getCode() + "] " + result.getMessage());
+}
+```
+
+---
+
+## 认证流程
+
+```
+1. 前端调 Web SDK → 跳转云塔授权页
+2. 用户点 "同意授权"
+3. 云塔回调 redirect_url?status=success&code=xxx
+4. 后端调 LoginEntry.login(LoginType.YUNTOWER, Map.of("code", "xxx"))
+   → 内部自动: 云塔 API → JWT 生成 → Redis 写入 → 返回 LoginResult
+5. 后续请求: Authorization: Bearer {jwt} → LoginEntry.validate(token)
+   → 解析 JWT → 对比 Redis 里的 jti（单设备登录检查）
+```
+
+---
+
+## API 参考
+
+### LoginEntry
+
+| 方法 | 说明 |
+|---|---|
+| `login(type, params)` | 登录 — 不抛异常，通过 `isSuccess()` 判断 |
+| `validate(token)` | 校验 JWT + 单设备登录检查 |
+| `logout(token)` | 退出登录 |
+
+### LoginType
+
+| 常量 | params |
+|---|---|
+| `LoginType.YUNTOWER` | `Map.of("code", "xxx")` |
+
+### LoginResult
+
+| 方法 | 说明 |
+|---|---|
+| `isSuccess()` | 是否成功 |
+| `getCode()` | 错误码（0=成功） |
+| `getMessage()` | 错误消息 |
+| `getAccessToken()` | 访问凭证 |
+| `getRefreshToken()` | 刷新凭证 |
+| `getUserId()` | 用户唯一标识 |
+| `getNickname()` | 昵称 |
+| `getAvatar()` | 头像 URL |
+
+### LoginUser
+
+| 方法 | 说明 |
+|---|---|
+| `getUserId()` | 用户唯一标识 |
+| `getJti()` | JWT 唯一 ID |
+| `get(key)` | 额外字段 |
+| `getString(key)` | 额外字段（String） |
+
+### TokenStore
+
+| 方法 | 说明 |
+|---|---|
+| `save(userId, jti, ttl)` | 存 jti（覆盖旧值 = 单设备登录） |
+| `getJti(userId)` | 查当前有效 jti |
+| `remove(userId)` | 退出登录 |
+
+### Redis
+
+```java
+import com.pgaot.account.auth.core.redis.Redis;
+Redis redis = new Redis();  // 自动读 CODE_AUTH_REDIS_URI
+redis.set("key", "value", 3600);
+```
+
+
+---
+
+## 项目结构
+
+```
+com.pgaot.account.auth/
+├── api/
+│   ├── LoginEntry.java              # 入口
+│   ├── LoginType.java               # 登录方式常量
+│   ├── model/
+│   │   ├── LoginResult.java         # 登录返回
+│   │   └── LoginUser.java           # 校验返回
+│   └── store/
+│       ├── TokenStore.java          # 存储接口
+│       └── RedisTokenStore.java     # Redis 实现
+│
+├── core/
+│   ├── LoginService.java            # 核心引擎
+│   ├── jwt/                         # JWT 生成/解析
+│   ├── strategy/                    # 策略模式
+│   ├── redis/Redis.java             # 通用缓存
+│   └── yuntower/                    # 云塔集成
+│
+├── common/
+│   ├── code/ErrorCode.java
+│   ├── config/LoginConfig.java
+│   ├── constants/Messages.java
+│   └── util/Assert.java
+│
+└── exception/LoginException.java
+```
+
+## License
+
+GPL-3.0
