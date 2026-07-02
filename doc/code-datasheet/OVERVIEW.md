@@ -56,7 +56,7 @@ SQL 执行链路:
     → 提取目标表(INSERT/UPDATE/DELETE主表) + 源表(SELECT FROM/JOIN/子查询)
     → 目标表按写操作校验模式，源表按 SELECT 校验模式
     → 表名替换: sales → tenant_a_sales
-    → readWrite 防火墙执行（禁止 DDL/DELETE）
+    → readWriteDelete 防火墙执行（禁止 DDL）
 
 DDL 保护:
   删表/重命名/清空/改列 → checkOwner() → 非 owner 拒绝
@@ -68,7 +68,8 @@ DDL 保护:
 |---|---|---|---|
 | READ_ONLY | 允许 | 禁止 | 禁止 |
 | WRITE_ONLY | 禁止 | 允许 | 禁止 |
-| READ_WRITE | 允许 | 允许 | 允许 |
+| READ_WRITE | 允许 | 允许 | 禁止 |
+| ALL | 允许 | 允许 | 允许 |
 
 ## 连接模型
 

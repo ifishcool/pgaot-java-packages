@@ -1,4 +1,5 @@
 package com.pgaot.datasheet.common.constants;
+/** 提示信息常量 */
 
 public final class Messages {
     private Messages() {}

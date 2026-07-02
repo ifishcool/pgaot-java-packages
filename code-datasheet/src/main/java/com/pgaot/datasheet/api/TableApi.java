@@ -4,6 +4,7 @@ import com.pgaot.datasheet.common.model.*;
 import com.pgaot.datasheet.core.TableManager;
 import com.pgaot.datasheet.exception.DatasheetException;
 import com.pgaot.datasheet.metadata.MetadataStore;
+import com.pgaot.datasheet.metadata.entity.ShareEntity;
 import com.pgaot.datasheet.metadata.entity.TableEntity;
 
 import java.util.List;
@@ -58,7 +59,19 @@ public class TableApi {
         tableManager.renameColumn(ownerId, parseId(tableId), oldName, newName);
     }
 
-    /** 查看该租户有权限的所有表 */
+    /** 恢复软删除 */
+    public void restore(String ownerId, String tableId) {
+        checkOwner(ownerId, tableId);
+        tableManager.restoreTable(parseId(tableId));
+    }
+
+    /** 物理删除（不可恢复） */
+    public void purge(String ownerId, String tableId) {
+        checkOwner(ownerId, tableId);
+        tableManager.purgeTable(ownerId, parseId(tableId));
+    }
+
+    /** 查看该租户有权限的所有表（不含已删除） */
     public List<TableInfo> list(String userId) {
         return store.listByUser(userId).stream()
                 .map(t -> toTableInfo(t, userId, t.getName())).collect(Collectors.toList());
@@ -73,6 +86,40 @@ public class TableApi {
     public void setMode(String ownerId, String tableId, TableMode mode) {
         checkOwner(ownerId, tableId);
         store.setMode(parseId(tableId), mode.name());
+    }
+
+    /** 返回所有表 + 来源信息（自己的表 / 从谁共享来的） */
+    public List<TableWithSource> listWithSource(String userId) {
+        return store.listByUser(userId).stream().map(t -> {
+            TableWithSource tws = new TableWithSource();
+            tws.setTableInfo(toTableInfo(t, t.getOwnerId(), t.getName()));
+            if (t.getOwnerId().equals(userId)) {
+                tws.setSource("OWNED");
+            } else {
+                tws.setSource("SHARED");
+                tws.setFromUser(t.getOwnerId());
+                ShareEntity s = store.getShare(t.getId(), userId);
+                if (s != null) tws.setPermission(new SharePermission(
+                        s.isCanSelect(), s.isCanInsert(), s.isCanUpdate(), s.isCanDelete()));
+            }
+            return tws;
+        }).collect(Collectors.toList());
+    }
+
+    /** 表 + 来源信息 */
+    public static class TableWithSource {
+        private TableInfo tableInfo;
+        private String source;      // "OWNED" / "SHARED"
+        private String fromUser;    // 共享自谁（source=SHARED 时有值）
+        private SharePermission permission;
+        public TableInfo getTableInfo() { return tableInfo; }
+        public void setTableInfo(TableInfo v) { tableInfo = v; }
+        public String getSource() { return source; }
+        public void setSource(String v) { source = v; }
+        public String getFromUser() { return fromUser; }
+        public void setFromUser(String v) { fromUser = v; }
+        public SharePermission getPermission() { return permission; }
+        public void setPermission(SharePermission v) { permission = v; }
     }
 
     // === helpers ===

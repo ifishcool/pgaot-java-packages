@@ -5,6 +5,16 @@ import com.pgaot.datasheet.core.*;
 import com.pgaot.datasheet.metadata.MetadataStore;
 import com.pgaot.sql.api.SqlTemplate;
 
+/**
+ * 数据表引擎入口.
+ *
+ * <pre>{@code
+ * DatasheetEngine engine = DatasheetEngine.fromEnv();
+ * engine.tables().create("alice", "sales", ...);
+ * engine.data().sql("alice", "SELECT * FROM sales");
+ * engine.shares().share("alice", tableId, "bob", SharePermission.ALL);
+ * }</pre>
+ */
 public class DatasheetEngine {
 
     private final TableApi tableApi;
@@ -25,7 +35,11 @@ public class DatasheetEngine {
         this.shareApi = new ShareApi(store);
     }
 
+    /** 默认数据源（CODE_SQL_URL/USER/PASS） */
     public static DatasheetEngine fromEnv() { return new DatasheetEngine(new DatasheetConfig()); }
+
+    /** 命名数据源（CODE_SQL_URL_{name}） */
+    public static DatasheetEngine fromEnv(String name) { return new DatasheetEngine(new DatasheetConfig(name)); }
 
     public TableApi tables() { return tableApi; }
     public DataApi data() { return dataApi; }

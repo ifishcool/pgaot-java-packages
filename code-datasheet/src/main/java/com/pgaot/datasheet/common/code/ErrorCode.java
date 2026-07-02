@@ -2,6 +2,7 @@ package com.pgaot.datasheet.common.code;
 
 import java.util.HashSet;
 import java.util.Set;
+/** 错误码 — 编号段 30_xxx_xxx */
 
 /**
  * 错误码 — 编号段 30_xxx_xxx.

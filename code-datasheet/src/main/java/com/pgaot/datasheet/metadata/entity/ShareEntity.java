@@ -1,6 +1,7 @@
 package com.pgaot.datasheet.metadata.entity;
 
 import lombok.Data;
+/** 共享记录实体 */
 
 @Data
 public class ShareEntity {

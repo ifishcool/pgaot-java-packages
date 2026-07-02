@@ -1,4 +1,5 @@
 package com.pgaot.datasheet.api;
+/** 数据操作 API — 增删改查 + 导入导出 */
 
 import com.pgaot.datasheet.core.ExportManager;
 import com.pgaot.datasheet.core.RowManager;
@@ -58,6 +59,18 @@ public class DataApi {
     @SuppressWarnings("unchecked")
     public <T> T sql(String userId, String sqlText) {
         return (T) sqlExecutor.execute(userId, sqlText);
+    }
+
+    /** 导入 CSV 字符串 */
+    public int importCsv(String userId, String tableId, String csv) {
+        List<Map<String, Object>> rows = exportManager.parseCsv(csv);
+        return rowManager.insert(userId, parseId(tableId), rows);
+    }
+
+    /** 导入 JSON 数组字符串 */
+    public int importJson(String userId, String tableId, String json) {
+        List<Map<String, Object>> rows = exportManager.parseJson(json);
+        return rowManager.insert(userId, parseId(tableId), rows);
     }
 
     /** 导出 CSV 字符串 */

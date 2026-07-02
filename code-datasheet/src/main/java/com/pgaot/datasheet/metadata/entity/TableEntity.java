@@ -1,6 +1,7 @@
 package com.pgaot.datasheet.metadata.entity;
 
 import lombok.Data;
+/** 表实体 */
 
 @Data
 public class TableEntity {
@@ -9,5 +10,6 @@ public class TableEntity {
     private String title;
     private String ownerId;
     private String description;
-    private String mode; // READ_ONLY / READ_WRITE
+    private String mode;
+    private boolean deleted;
 }

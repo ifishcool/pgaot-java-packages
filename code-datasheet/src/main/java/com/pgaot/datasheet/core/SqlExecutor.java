@@ -11,6 +11,7 @@ import com.pgaot.datasheet.exception.DatasheetException;
 import com.pgaot.datasheet.metadata.MetadataStore;
 import com.pgaot.datasheet.metadata.entity.ShareEntity;
 import com.pgaot.datasheet.metadata.entity.TableEntity;
+/** SQL 执行器 — AST 提取 + 权限校验 + 表名替换 */
 import com.pgaot.sql.api.SqlTemplate;
 
 import java.util.*;
@@ -88,7 +89,7 @@ public class SqlExecutor {
             }
 
             // 自己的表: 检查 mode
-            String mode = ot.getMode() != null ? ot.getMode() : "READ_WRITE";
+            String mode = ot.getMode() != null ? ot.getMode() : "ALL";
             switch (mode) {
                 case "READ_ONLY":
                     if (!"SELECT".equals(opForCheck))

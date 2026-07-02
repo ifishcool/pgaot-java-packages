@@ -2,6 +2,7 @@ package com.pgaot.datasheet.common.model;
 
 import lombok.Data;
 import java.util.List;
+/** 表信息 */
 import java.util.Map;
 
 @Data

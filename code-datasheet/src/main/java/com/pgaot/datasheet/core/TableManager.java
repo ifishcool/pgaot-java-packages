@@ -1,4 +1,5 @@
 package com.pgaot.datasheet.core;
+/** DDL 生成 */
 
 import com.pgaot.datasheet.common.constants.Messages;
 import com.pgaot.datasheet.common.model.ColumnInfo;
@@ -45,10 +46,23 @@ public class TableManager {
         return store.insertTable(t);
     }
 
+    /** 软删除（标记删除，不 DROP 表） */
     public void dropTable(String ownerId, Long tableId) {
+        store.softDelete(tableId);
+    }
+
+    /** 恢复软删除 */
+    public void restoreTable(Long tableId) {
+        store.restore(tableId);
+    }
+
+    /** 物理删除（DROP TABLE + 清元数据） */
+    public void purgeTable(String ownerId, Long tableId) {
         TableEntity t = store.getTable(tableId);
-        String physical = physicalName(ownerId, t.getName());
-        sql.sql("DROP TABLE IF EXISTS " + physical);
+        if (t != null) {
+            String physical = physicalName(ownerId, t.getName());
+            sql.sql("DROP TABLE IF EXISTS " + physical);
+        }
         store.dropTable(tableId);
     }
 
@@ -92,10 +106,19 @@ public class TableManager {
 
     private String toSqlType(ColumnType type) {
         return switch (type) {
-            case STRING -> "VARCHAR(512)";
-            case NUMBER -> "DECIMAL(20,4)";
-            case DATE   -> "DATETIME";
-            case BOOLEAN -> "TINYINT(1)";
+            case STRING    -> "VARCHAR(512)";
+            case TEXT      -> "TEXT";
+            case INT       -> "INT";
+            case BIGINT    -> "BIGINT";
+            case TINYINT   -> "TINYINT";
+            case DOUBLE    -> "DOUBLE";
+            case DECIMAL   -> "DECIMAL(20,4)";
+            case DATE      -> "DATE";
+            case TIME      -> "TIME";
+            case DATETIME  -> "DATETIME";
+            case TIMESTAMP -> "TIMESTAMP";
+            case BOOLEAN   -> "TINYINT(1)";
+            case JSON      -> "JSON";
         };
     }
 }

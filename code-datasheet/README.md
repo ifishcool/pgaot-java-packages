@@ -3,7 +3,7 @@
 [![JDK](https://img.shields.io/badge/JDK-21%2B-blue)](https://adoptium.net/)
 [![License](https://img.shields.io/badge/license-GPL--3.0-green)](LICENSE)
 
-多租户数据表协作平台 — 表前缀隔离 + 模式控制 + SQL 防火墙。
+多租户数据表协作平台 — 表前缀隔离 + 模式控制 + 共享权限 + SQL 防火墙。
 
 ---
 
@@ -30,14 +30,15 @@
 </dependency>
 ```
 
-~/.m2/settings.xml 需配置 GitHub Token（同 code-auth/code-sql）。
-
 ## 环境变量
 
 ```
-CODE_SQL_URL    # MySQL 连接地址（必填）
-CODE_SQL_USER   # 数据库用户名（必填）
-CODE_SQL_PASS   # 数据库密码（必填）
+CODE_SQL_URL        # MySQL 连接地址（必填）
+CODE_SQL_USER       # 数据库用户名（必填）
+CODE_SQL_PASS       # 数据库密码（必填）
+
+# 多数据源
+CODE_SQL_URL_MAIN   # 命名数据源 MAIN
 ```
 
 ---
@@ -45,24 +46,32 @@ CODE_SQL_PASS   # 数据库密码（必填）
 ## 快速开始
 
 ```java
-DatasheetEngine engine = DatasheetEngine.fromEnv();
+DatasheetEngine engine = DatasheetEngine.fromEnv();          // 默认数据源
+DatasheetEngine engine = DatasheetEngine.fromEnv("MAIN");    // 命名数据源
 
 // 建表
-TableInfo t = engine.tables().create("tenant_a", "sales", "销售表", null, List.of(
+TableInfo t = engine.tables().create("alice", "sales", "销售表", null, List.of(
     new ColumnInfo("product", ColumnType.STRING, true),
     new ColumnInfo("amount",  ColumnType.NUMBER, false)
 ));
 
-// 设只读模式
-engine.tables().setMode("tenant_a", t.getId(), TableMode.READ_ONLY);
+// 共享给 bob（只读）
+engine.shares().share("alice", t.getId(), "bob", SharePermission.SELECT_ONLY);
 
-// 数据操作
-engine.data().insert("tenant_a", t.getId(), Map.of("product", "A", "amount", 100));
-List<Map<String, Object>> rows = engine.data().sql("tenant_a",
+// bob 用 SQL 查询
+List<Map<String, Object>> rows = engine.data().sql("bob",
     "SELECT * FROM sales WHERE amount > 50");
 
-// 导出
-String csv = engine.data().exportCsv("tenant_a", t.getId(), null, null);
+// 导入导出
+engine.data().importCsv("alice", t.getId(), "product,amount\nA,100");
+String csv = engine.data().exportCsv("alice", t.getId(), null, null);
+
+// 软删除 + 恢复
+engine.tables().drop("alice", t.getId());
+engine.tables().restore("alice", t.getId());
+
+// 物理删除
+engine.tables().purge("alice", t.getId());
 ```
 
 ---
@@ -74,27 +83,56 @@ String csv = engine.data().exportCsv("tenant_a", t.getId(), null, null);
 | 方法 | 说明 |
 |---|---|
 | `create(ownerId, name, title, desc, columns)` | 建表 |
-| `drop(ownerId, tableId)` | 删表，需 owner |
-| `rename(ownerId, tableId, newName)` | 重命名，需 owner |
-| `truncate(ownerId, tableId)` | 清空，需 owner |
-| `addColumn(ownerId, tableId, column)` | 加列，需 owner |
-| `dropColumn(ownerId, tableId, columnName)` | 删列（必填列不可删），需 owner |
-| `renameColumn(ownerId, tableId, oldName, newName)` | 重命名列，需 owner |
-| `list(userId)` | 该用户所有表 |
-| `get(tableId)` | 表结构 |
+| `drop(ownerId, tableId)` | 软删除（可恢复） |
+| `restore(ownerId, tableId)` | 恢复软删除 |
+| `purge(ownerId, tableId)` | 物理删除（不可恢复） |
+| `rename/truncate/addColumn/dropColumn/renameColumn` | 表结构操作，需 owner |
+| `list(userId)` | 该用户所有表（不含已删除） |
+| `listWithSource(userId)` | 所有表 + 来源(OWNED/SHARED) + 权限 |
+| `get(tableId)` | 表结构（列信息实时从 INFORMATION_SCHEMA 读取） |
 | `setMode(ownerId, tableId, TableMode)` | 模式控制 |
+
+### ColumnType
+
+| 类型 | MySQL |
+|---|---|
+| `STRING` | VARCHAR(512) |
+| `TEXT` | TEXT |
+| `INT` | INT |
+| `BIGINT` | BIGINT |
+| `TINYINT` | TINYINT |
+| `DOUBLE` | DOUBLE |
+| `DECIMAL` | DECIMAL(20,4) |
+| `DATE` | DATE |
+| `TIME` | TIME |
+| `DATETIME` | DATETIME |
+| `TIMESTAMP` | TIMESTAMP |
+| `BOOLEAN` | TINYINT(1) |
+| `JSON` | JSON |
 
 ### DataApi
 
 | 方法 | 说明 |
 |---|---|
-| `insert(userId, tableId, row)` | 插入单行 |
-| `insert(userId, tableId, rows)` | 批量插入（最多 1000 行） |
-| `update(userId, tableId, whereClause, values)` | 按条件更新 |
-| `delete(userId, tableId, whereClause)` | 按条件删除 |
-| `sql(userId, sql)` | 执行 SQL（SELECT/INSERT/UPDATE），禁止 DDL/DELETE |
-| `exportCsv(userId, tableId, columns, whereClause)` | 导出 CSV |
-| `exportJson(userId, tableId, columns, whereClause)` | 导出 JSON |
+| `insert(userId, tableId, row/rows)` | 插入（最多 1000 行） |
+| `update/delete` | 按条件更新/删除 |
+| `sql(userId, sql)` | 执行用户 SQL（SELECT/INSERT/UPDATE/DELETE，禁止 DDL） |
+| `exportCsv/exportJson` | 导出 |
+| `importCsv/importJson` | 导入 |
+
+### ShareApi
+
+| 方法 | 说明 |
+|---|---|
+| `share(ownerId, tableId, toUser, perm)` | 共享表 |
+| `unshare(ownerId, tableId, toUser)` | 取消共享 |
+| `list/listSent/listReceived` | 查看共享关系 |
+
+### SharePermission
+
+- `SharePermission.ALL` — 全部权限
+- `SharePermission.SELECT_ONLY` — 只读
+- `new SharePermission(S,I,U,D)` — 自定义
 
 ### TableMode
 
@@ -102,25 +140,25 @@ String csv = engine.data().exportCsv("tenant_a", t.getId(), null, null);
 |---|---|---|---|
 | `READ_ONLY` | 允许 | 禁止 | 禁止 |
 | `WRITE_ONLY` | 禁止 | 允许 | 禁止 |
-| `READ_WRITE`（默认） | 允许 | 允许 | 允许 |
+| `READ_WRITE` | 允许 | 允许 | 禁止 |
+| `ALL`（默认） | 允许 | 允许 | 允许 |
 
 ---
 
 ## 隔离模型
 
 ```
-建表: 逻辑名 sales → 物理表 tenant_a_sales
+表前缀: 物理表名 = userId_tableName
 
-SQL:  SELECT * FROM sales
-      → Druid AST 提取表名 [sales]
-      → 逐表校验: owner归属 + TableMode
-      → 表名替换: sales → tenant_a_sales
-      → readWrite 防火墙执行
+SQL 执行:
+  Druid AST 提取表名 → 目标表/源表分离校验 → 表名替换 → readWriteDelete 防火墙执行
 
-DDL:  checkOwner() → 非 owner 拒绝
+模式: READ_ONLY(禁写) / WRITE_ONLY(禁读) / READ_WRITE(默认)
+
+共享: 细粒度权限(SELECT/INSERT/UPDATE/DELETE) + 共享关系查询
+
+DDL 保护: checkOwner() 非 owner 拒绝
 ```
-
----
 
 ## 项目结构
 
@@ -129,21 +167,21 @@ code-datasheet/src/main/java/com/pgaot/datasheet/
 ├── api/
 │   ├── DatasheetEngine.java          # 入口
 │   ├── TableApi.java                 # 表管理
-│   └── DataApi.java                  # 数据操作
+│   ├── DataApi.java                  # 数据操作
+│   └── ShareApi.java                 # 共享管理
 ├── core/
 │   ├── TableManager.java             # DDL
-│   ├── RowManager.java               # 增删改行 + 模式校验（MySQL原生类型检查）
-│   ├── SqlExecutor.java              # Druid AST 表名提取 + 权限 + 替换
-│   └── ExportManager.java            # CSV/JSON
+│   ├── RowManager.java               # 增删改 + 模式/共享校验
+│   ├── SqlExecutor.java              # AST 提取 + 权限 + 替换
+│   └── ExportManager.java            # 导入导出
 ├── metadata/
-│   ├── MetadataStore.java            # ds_table CRUD + INFORMATION_SCHEMA
-│   └── entity/TableEntity.java
+│   ├── MetadataStore.java            # ds_table + ds_share + INFO_SCHEMA
+│   └── entity/                       # TableEntity, ShareEntity
 ├── common/
-│   ├── code/IResultCode.java         # 结果码接口
 │   ├── code/ErrorCode.java           # 30_xxx_xxx
-│   ├── config/DatasheetConfig.java   # 配置
+│   ├── config/DatasheetConfig.java   # admin + readWriteDelete 双连接
 │   ├── constants/
-│   └── model/                        # TableInfo, ColumnInfo, TableMode
+│   └── model/                        # TableInfo, ColumnInfo, TableMode, SharePermission
 └── exception/DatasheetException.java # 7 个静态工厂
 ```
 

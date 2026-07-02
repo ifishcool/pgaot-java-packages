@@ -94,7 +94,16 @@ public class ShareTest {
         System.out.println("    来自: " + received.get(0).getFromUser()
                 + " 表: " + received.get(0).getTableName());
 
-        print("8. guest SQL SELECT — 有权限应成功");
+        print("8a. guest 查看自己所有表（含来源）");
+        var all = engine.tables().listWithSource(guest);
+        for (var tws : all) {
+            System.out.println("    │ " + tws.getSource() + " " + tws.getTableInfo().getName()
+                    + (tws.getFromUser() != null ? " from " + tws.getFromUser() : "")
+                    + " S=" + (tws.getPermission() != null && tws.getPermission().isCanSelect()));
+        }
+        check(all.size() == 1, "应有 1 个表（共享来的）");
+
+        print("8b. guest SQL SELECT — 有权限应成功");
         List<Map<String, Object>> r8 = engine.data().sql(guest, "SELECT * FROM scores");
         check(r8.size() == 3, "应查到 3 行: " + r8.size());
         printRows(r8);
@@ -189,15 +198,84 @@ public class ShareTest {
         }
 
         // ════════════════════════
-        // 阶段六: 取消共享
+        // 阶段六: 高危 SQL 拦截（共享用户也受防火墙保护）
+        // ════════════════════════
+        pause();
+        System.out.println("  === 阶段六: 高危 SQL 拦截 ===\n");
+
+        print("21. guest SQL DROP TABLE — 防火墙");
+        try {
+            engine.data().sql(guest, "DROP TABLE scores");
+            check(false, "DROP TABLE 应拦截");
+        } catch (Exception e) {
+            check(true, "拦截: " + e.getMessage().lines().findFirst().orElse(""));
+        }
+
+        print("22. guest SQL ALTER TABLE — 防火墙");
+        try {
+            engine.data().sql(guest, "ALTER TABLE scores ADD COLUMN hack VARCHAR(100)");
+            check(false, "ALTER TABLE 应拦截");
+        } catch (Exception e) {
+            check(true, "拦截");
+        }
+
+        print("23. guest SQL TRUNCATE — 防火墙");
+        try {
+            engine.data().sql(guest, "TRUNCATE TABLE scores");
+            check(false, "TRUNCATE 应拦截");
+        } catch (Exception e) {
+            check(true, "拦截");
+        }
+
+        print("24. guest SQL CREATE TABLE — 防火墙");
+        try {
+            engine.data().sql(guest, "CREATE TABLE backdoor (id INT)");
+            check(false, "CREATE TABLE 应拦截");
+        } catch (Exception e) {
+            check(true, "拦截");
+        }
+
+        print("25. guest SQL 多语句注入");
+        try {
+            engine.data().sql(guest, "SELECT * FROM scores; DROP TABLE scores");
+            check(false, "多语句注入应拦截");
+        } catch (Exception e) {
+            check(true, "拦截");
+        }
+
+        print("26. guest SQL 子查询窃取 owner 其他表");
+        engine.tables().create(owner, "secrets", "机密表", null, List.of(
+                new ColumnInfo("secret", ColumnType.STRING, true)));
+        engine.data().sql(owner, "INSERT INTO secrets (secret) VALUES ('top_secret')");
+        try {
+            engine.data().sql(guest, "SELECT * FROM scores WHERE name IN (SELECT secret FROM secrets)");
+            check(false, "跨表窃取应拦截（secrets 未共享）");
+        } catch (Exception e) {
+            check(true, "拦截");
+        }
+        engine.tables().drop(owner,
+                engine.tables().list(owner).stream()
+                        .filter(ti -> "secrets".equals(ti.getName()))
+                        .findFirst().get().getId());
+
+        print("27. guest SQL INSERT 到不存在表 — 表名欺骗");
+        try {
+            engine.data().sql(guest, "INSERT INTO scores_backup (name,score) SELECT name,score FROM scores");
+            check(false, "scores_backup 不存在应拦截");
+        } catch (Exception e) {
+            check(true, "拦截");
+        }
+
+        // ════════════════════════
+        // 阶段七: 取消共享
         // ════════════════════════
         pause();
         System.out.println("  === 阶段六: 取消共享 ===\n");
 
-        print("21. owner 取消共享");
+        print("28. owner 取消共享");
         engine.shares().unshare(owner, tableId, guest);
 
-        print("22. guest 再次查询 — 应拒绝");
+        print("29. guest 再次查询 — 应拒绝");
         try {
             engine.data().sql(guest, "SELECT * FROM scores");
             check(false, "取消后不应查到");
@@ -205,7 +283,7 @@ public class ShareTest {
             check(true, "拒绝");
         }
 
-        print("23. owner 删表");
+        print("30. owner 删表");
         engine.tables().drop(owner, tableId);
         check(engine.tables().get(tableId) == null, "删表失败");
 

@@ -5,6 +5,7 @@ import com.pgaot.datasheet.metadata.entity.TableEntity;
 import com.pgaot.sql.api.SqlTemplate;
 
 import java.util.*;
+/** 元数据存储 — ds_table + ds_share */
 import java.util.stream.Collectors;
 
 public class MetadataStore {
@@ -23,11 +24,13 @@ public class MetadataStore {
                 "title VARCHAR(128) DEFAULT NULL, " +
                 "owner_id VARCHAR(64) NOT NULL, " +
                 "description TEXT DEFAULT NULL, " +
-                "mode VARCHAR(16) NOT NULL DEFAULT 'READ_WRITE', " +
+                "mode VARCHAR(16) NOT NULL DEFAULT 'ALL', " +
+                "deleted BOOLEAN NOT NULL DEFAULT FALSE, " +
                 "created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
                 "updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
                 "PRIMARY KEY (id), " +
                 "UNIQUE KEY uk_owner_table (owner_id, name))");
+        try { sql.sql("ALTER TABLE ds_table ADD COLUMN deleted BOOLEAN NOT NULL DEFAULT FALSE"); } catch (Exception ignored) {}
         sql.sql("CREATE TABLE IF NOT EXISTS ds_share (" +
                 "id BIGINT NOT NULL AUTO_INCREMENT, " +
                 "table_id BIGINT NOT NULL, " +
@@ -100,7 +103,7 @@ public class MetadataStore {
     public TableEntity insertTable(TableEntity t) {
         sql.sql("INSERT INTO ds_table (name, title, owner_id, description, mode) VALUES (?,?,?,?,?)",
                 t.getName(), t.getTitle(), t.getOwnerId(), t.getDescription(),
-                t.getMode() != null ? t.getMode() : "READ_WRITE");
+                t.getMode() != null ? t.getMode() : "ALL");
         List<Map<String, Object>> rows = sql.sql(
                 "SELECT * FROM ds_table WHERE owner_id=? AND name=? ORDER BY id DESC LIMIT 1",
                 t.getOwnerId(), t.getName());
@@ -123,7 +126,7 @@ public class MetadataStore {
     public List<TableEntity> listByUser(String userId) {
         Set<Long> ids = new LinkedHashSet<>();
         for (Map<String, Object> r : sql.<List<Map<String, Object>>>sql(
-                "SELECT id FROM ds_table WHERE owner_id=?", userId))
+                "SELECT id FROM ds_table WHERE owner_id=? AND deleted=0", userId))
             ids.add(((Number) r.get("id")).longValue());
         ids.addAll(getSharedTableIds(userId));
 
@@ -135,7 +138,19 @@ public class MetadataStore {
         return result;
     }
 
+    /** 软删除 */
+    public void softDelete(Long id) {
+        sql.sql("UPDATE ds_table SET deleted=1 WHERE id=?", id);
+    }
+
+    /** 恢复软删除 */
+    public void restore(Long id) {
+        sql.sql("UPDATE ds_table SET deleted=0 WHERE id=?", id);
+    }
+
+    /** 硬删除（清除元数据） */
     public void dropTable(Long id) {
+        sql.sql("DELETE FROM ds_share WHERE table_id=?", id);
         sql.sql("DELETE FROM ds_table WHERE id=?", id);
     }
 

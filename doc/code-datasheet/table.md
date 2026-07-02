@@ -53,9 +53,18 @@ TableApi.drop("tenant_a", tableId)
 | ColumnType | MySQL |
 |---|---|
 | STRING | VARCHAR(512) |
-| NUMBER | DECIMAL(20,4) |
-| DATE | DATETIME |
+| TEXT | TEXT |
+| INT | INT |
+| BIGINT | BIGINT |
+| TINYINT | TINYINT |
+| DOUBLE | DOUBLE |
+| DECIMAL | DECIMAL(20,4) |
+| DATE | DATE |
+| TIME | TIME |
+| DATETIME | DATETIME |
+| TIMESTAMP | TIMESTAMP |
 | BOOLEAN | TINYINT(1) |
+| JSON | JSON |
 
 ## 权限控制
 

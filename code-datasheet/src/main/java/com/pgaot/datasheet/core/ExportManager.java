@@ -4,6 +4,7 @@ import com.pgaot.datasheet.common.constants.DatasheetConstants;
 import com.pgaot.datasheet.exception.DatasheetException;
 import com.pgaot.datasheet.metadata.MetadataStore;
 import com.pgaot.datasheet.metadata.entity.TableEntity;
+/** 导入导出 */
 import com.pgaot.sql.api.SqlTemplate;
 
 import java.util.*;
@@ -77,6 +78,96 @@ public class ExportManager {
         if (rows.size() > DatasheetConstants.MAX_EXPORT_ROWS)
             throw DatasheetException.rowValidationFailed("max export rows: " + DatasheetConstants.MAX_EXPORT_ROWS);
         return rows;
+    }
+
+    // ===== 导入 =====
+
+    /** 解析 CSV 为 Map 列表 */
+    public List<Map<String, Object>> parseCsv(String csv) {
+        String[] lines = csv.trim().split("\n");
+        if (lines.length < 2) throw DatasheetException.rowValidationFailed("CSV 至少需要表头+1行数据");
+        String[] headers = lines[0].split(",");
+        List<Map<String, Object>> rows = new ArrayList<>();
+        for (int i = 1; i < lines.length; i++) {
+            String[] vals = lines[i].split(",", -1);
+            Map<String, Object> row = new LinkedHashMap<>();
+            for (int j = 0; j < headers.length; j++)
+                row.put(headers[j].trim(), j < vals.length ? unquote(vals[j].trim()) : null);
+            rows.add(row);
+        }
+        return rows;
+    }
+
+    /** 解析 JSON 数组为 Map 列表 */
+    @SuppressWarnings("unchecked")
+    public List<Map<String, Object>> parseJson(String json) {
+        // 简单 JSON 解析，假设格式 [{"k":"v"},...]
+        List<Map<String, Object>> rows = new ArrayList<>();
+        json = json.trim();
+        if (!json.startsWith("[")) throw DatasheetException.rowValidationFailed("JSON 需为数组格式");
+        String content = json.substring(1, json.length() - 1).trim();
+        if (content.isEmpty()) return rows;
+
+        for (String obj : splitJsonObjects(content)) {
+            Map<String, Object> row = new LinkedHashMap<>();
+            obj = obj.trim();
+            if (obj.startsWith("{")) obj = obj.substring(1);
+            if (obj.endsWith("}")) obj = obj.substring(0, obj.length() - 1);
+            for (String pair : splitJsonPairs(obj)) {
+                int colon = pair.indexOf(':');
+                if (colon < 0) continue;
+                String key = unquote(pair.substring(0, colon).trim());
+                String val = pair.substring(colon + 1).trim();
+                row.put(key, parseJsonValue(val));
+            }
+            rows.add(row);
+        }
+        return rows;
+    }
+
+    private List<String> splitJsonObjects(String s) {
+        List<String> result = new ArrayList<>();
+        int depth = 0, start = 0;
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (c == '{' || c == '[') depth++;
+            else if (c == '}' || c == ']') depth--;
+            if (depth == 0 && c == ',') { result.add(s.substring(start, i)); start = i + 1; }
+        }
+        result.add(s.substring(start));
+        return result;
+    }
+
+    private List<String> splitJsonPairs(String s) {
+        List<String> result = new ArrayList<>();
+        int depth = 0, start = 0;
+        boolean inStr = false;
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (c == '"' && (i == 0 || s.charAt(i - 1) != '\\')) inStr = !inStr;
+            if (!inStr) {
+                if (c == '{' || c == '[') depth++;
+                else if (c == '}' || c == ']') depth--;
+                else if (depth == 0 && c == ',') { result.add(s.substring(start, i)); start = i + 1; }
+            }
+        }
+        result.add(s.substring(start));
+        return result;
+    }
+
+    private Object parseJsonValue(String v) {
+        if (v == null || v.isEmpty() || "null".equals(v)) return null;
+        if ("true".equals(v)) return true;
+        if ("false".equals(v)) return false;
+        if (v.startsWith("\"")) return unquote(v);
+        try { return v.contains(".") ? Double.valueOf(v) : Long.valueOf(v); }
+        catch (NumberFormatException e) { return unquote(v); }
+    }
+
+    private String unquote(String s) {
+        if (s.length() >= 2 && s.startsWith("\"") && s.endsWith("\""))
+            return s.substring(1, s.length() - 1).replace("\\\"", "\"").replace("\\\\", "\\");
+        return s;
     }
 
     private String toJson(Object v) {

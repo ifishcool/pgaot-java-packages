@@ -1,6 +1,7 @@
 package com.pgaot.datasheet.common.model;
 
 import lombok.Data;
+/** 列定义 */
 
 @Data
 public class ColumnInfo {

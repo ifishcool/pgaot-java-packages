@@ -1,4 +1,5 @@
 package com.pgaot.datasheet.core;
+/** 增删改行 + 模式/共享权限校验 */
 
 import com.pgaot.datasheet.common.constants.DatasheetConstants;
 import com.pgaot.datasheet.common.constants.Messages;
@@ -86,7 +87,7 @@ public class RowManager {
     }
 
     private void checkMode(TableEntity table, boolean isDelete) {
-        String mode = table.getMode() != null ? table.getMode() : "READ_WRITE";
+        String mode = table.getMode() != null ? table.getMode() : "ALL";
         if ("READ_ONLY".equals(mode))
             throw DatasheetException.sqlOperationDenied(String.format(Messages.MODE_READ_ONLY, table.getName()));
         if (isDelete && "WRITE_ONLY".equals(mode))
