@@ -1,5 +1,6 @@
 package com.pgaot.account.auth.core.redis;
 
+import com.pgaot.account.auth.common.constants.AuthConstants;
 import com.pgaot.account.auth.common.constants.Messages;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -22,7 +23,7 @@ public class Redis {
     private final RedisCommands<String, String> redis;
 
     /** 从 CODE_AUTH_REDIS_URI 读取连接地址 */
-    public Redis() { this(System.getenv("CODE_AUTH_REDIS_URI")); }
+    public Redis() { this(System.getenv(AuthConstants.Env.REDIS_URI)); }
 
     /** @param redisUri Redis 连接地址，如 "redis://:pwd@host:6379/1" */
     public Redis(String redisUri) {

@@ -218,12 +218,12 @@ r.getPages();  // 总页数
 ```java
 import com.pgaot.sql.exception.SqlException;
 
-SqlException.wallBlocked("DROP TABLE 被拦截");      // 10_003_001
-SqlException.executionFailed("timeout");            // 10_002_001
-SqlException.connectionFailed("Access denied");     // 10_001_001
-SqlException.envMissing("CODE_SQL_URL");            // 10_001_002
-SqlException.pageParamInvalid("页码必须 >= 1");      // 10_004_001
-SqlException.jpaFailed("query error");              // 10_005_001
+SqlException.wallBlocked("DROP TABLE 被拦截");      // 20_003_001
+SqlException.executionFailed("timeout");            // 20_002_001
+SqlException.connectionFailed("Access denied");     // 20_001_001
+SqlException.envMissing("CODE_SQL_URL");            // 20_001_002
+SqlException.pageParamInvalid("页码必须 >= 1");      // 20_004_001
+SqlException.jpaFailed("query error");              // 20_005_001
 ```
 
 ---

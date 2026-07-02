@@ -3,7 +3,7 @@
 [![JDK](https://img.shields.io/badge/JDK-21%2B-blue)](https://adoptium.net/)
 [![License](https://img.shields.io/badge/license-GPL--3.0-green)](LICENSE)
 
-PGAOT平台通用认证框架 — 策略模式 + JWT + 单设备登录 + Redis 持久化，零 Spring 依赖。
+PGAOT平台通用认证框架 — 策略模式 + JWT + 单设备登录 + Redis 持久化。
 
 ---
 
@@ -165,31 +165,42 @@ redis.set("key", "value", 3600);
 ## 项目结构
 
 ```
-com.pgaot.account.auth/
-├── api/
-│   ├── LoginEntry.java              # 入口
-│   ├── LoginType.java               # 登录方式常量
-│   ├── model/
-│   │   ├── LoginResult.java         # 登录返回
-│   │   └── LoginUser.java           # 校验返回
-│   └── store/
-│       ├── TokenStore.java          # 存储接口
-│       └── RedisTokenStore.java     # Redis 实现
-│
-├── core/
-│   ├── LoginService.java            # 核心引擎
-│   ├── jwt/                         # JWT 生成/解析
-│   ├── strategy/                    # 策略模式
-│   ├── redis/Redis.java             # 通用缓存
-│   └── yuntower/                    # 云塔集成
-│
-├── common/
-│   ├── code/ErrorCode.java
-│   ├── config/LoginConfig.java
-│   ├── constants/Messages.java
-│   └── util/Assert.java
-│
-└── exception/LoginException.java
+code-auth/
+└── src/main/java/com/pgaot/account/auth/
+    ├── api/
+    │   ├── LoginEntry.java              # 入口
+    │   ├── LoginType.java               # 登录方式常量
+    │   ├── model/
+    │   │   ├── LoginResult.java         # 登录返回
+    │   │   └── LoginUser.java           # 校验返回
+    │   └── store/
+    │       ├── TokenStore.java          # 存储接口
+    │       └── RedisTokenStore.java     # Redis 实现
+    │
+    ├── core/
+    │   ├── LoginService.java            # 核心引擎
+    │   ├── jwt/
+    │   │   ├── JwtUtil.java             # JWT 生成/校验
+    │   │   ├── TokenClaims.java         # JWT payload
+    │   │   └── TokenPair.java           # access + refresh
+    │   ├── strategy/
+    │   │   ├── LoginStrategy.java       # 策略接口
+    │   │   ├── StrategyRegistry.java    # 注册中心
+    │   │   └── UserInfo.java            # 认证结果
+    │   ├── redis/Redis.java             # 通用缓存
+    │   └── yuntower/
+    │       ├── YuntowerAuthFactory.java # 工厂
+    │       └── YuntowerStrategy.java    # 云塔实现
+    │
+    ├── common/
+    │   ├── code/IResultCode.java        # 结果码接口
+    │   ├── code/ErrorCode.java          # 错误码
+    │   ├── config/LoginConfig.java      # JWT 配置
+    │   ├── constants/AuthConstants.java  # 常量（环境变量 Key）
+    │   ├── constants/Messages.java      # 提示信息常量
+    │   └── util/Assert.java             # 参数校验
+    │
+    └── exception/LoginException.java    # 异常
 ```
 
 ## License

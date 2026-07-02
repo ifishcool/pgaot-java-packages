@@ -1,5 +1,7 @@
 package com.pgaot.account.auth.api.store;
 
+import com.pgaot.account.auth.common.constants.AuthConstants;
+
 /**
  * Token 存储接口 — 单设备登录的核心.
  *
@@ -14,8 +16,8 @@ package com.pgaot.account.auth.api.store;
 public interface TokenStore {
 
     /** Key 前缀，默认 "login:token"，可通过 CODE_AUTH_KEY_PREFIX 环境变量覆盖 */
-    String KEY_PREFIX = System.getenv("CODE_AUTH_KEY_PREFIX") != null
-            ? System.getenv("CODE_AUTH_KEY_PREFIX")
+    String KEY_PREFIX = System.getenv(AuthConstants.Env.KEY_PREFIX) != null
+            ? System.getenv(AuthConstants.Env.KEY_PREFIX)
             : "login:token";
 
     /** 拼接 Redis Key */

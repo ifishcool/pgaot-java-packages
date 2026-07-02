@@ -1,7 +1,5 @@
 package com.pgaot.account.auth.core.strategy;
 
-import com.pgaot.account.auth.common.code.ErrorCode;
-import com.pgaot.account.auth.common.constants.Messages;
 import com.pgaot.account.auth.exception.LoginException;
 
 import java.util.Map;
@@ -40,8 +38,7 @@ public class StrategyRegistry {
      */
     public LoginStrategy get(String key) {
         LoginStrategy s = strategies.get(key);
-        if (s == null) throw new LoginException(ErrorCode.AUTH_UNSUPPORTED_TYPE,
-                Messages.AUTH_UNSUPPORTED_TYPE + key);
+        if (s == null) throw LoginException.unsupportedType(key);
         return s;
     }
 }

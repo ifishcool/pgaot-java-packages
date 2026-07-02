@@ -1,6 +1,5 @@
 package com.pgaot.account.auth.core;
 
-import com.pgaot.account.auth.common.code.ErrorCode;
 import com.pgaot.account.auth.common.config.LoginConfig;
 import com.pgaot.account.auth.core.jwt.JwtUtil;
 import com.pgaot.account.auth.core.jwt.TokenClaims;
@@ -9,7 +8,6 @@ import com.pgaot.account.auth.core.strategy.LoginStrategy;
 import com.pgaot.account.auth.core.strategy.StrategyRegistry;
 import com.pgaot.account.auth.core.strategy.UserInfo;
 
-import com.pgaot.account.auth.common.constants.Messages;
 import com.pgaot.account.auth.exception.LoginException;
 import com.pgaot.account.auth.api.store.TokenStore;
 
@@ -54,7 +52,7 @@ public class LoginService {
         TokenClaims claims = jwt.validate(jwtToken);
         String currentJti = tokenStore.getJti(claims.getUserId());
         if (currentJti != null && !claims.getJti().equals(currentJti)) {
-            throw new LoginException(ErrorCode.TOKEN_KICKED, Messages.TOKEN_KICKED);
+            throw LoginException.tokenKicked();
         }
         return new LoginUser(claims);
     }

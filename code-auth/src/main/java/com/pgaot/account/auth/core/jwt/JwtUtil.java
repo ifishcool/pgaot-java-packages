@@ -1,6 +1,5 @@
 package com.pgaot.account.auth.core.jwt;
 
-import com.pgaot.account.auth.common.code.ErrorCode;
 import com.pgaot.account.auth.exception.LoginException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -60,7 +59,7 @@ public class JwtUtil {
             return new TokenClaims(claims.getSubject(), claims.getId(),
                     claims.getIssuedAt(), claims.getExpiration(), extra);
         } catch (JwtException | IllegalArgumentException e) {
-            throw new LoginException(ErrorCode.TOKEN_INVALID, e.getMessage());
+            throw LoginException.tokenInvalid(e.getMessage());
         }
     }
 

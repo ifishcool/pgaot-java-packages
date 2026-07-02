@@ -17,9 +17,13 @@ import com.pgaot.sql.exception.SqlException;
  */
 public final class EnvConfig {
 
-    public static final String URL  = "CODE_SQL_URL";
-    public static final String USER = "CODE_SQL_USER";
-    public static final String PASS = "CODE_SQL_PASS";
+    public static final String URL          = "CODE_SQL_URL";
+    public static final String USER         = "CODE_SQL_USER";
+    public static final String PASS         = "CODE_SQL_PASS";
+    public static final String POOL_INITIAL = "CODE_SQL_POOL_INITIAL";
+    public static final String POOL_MIN_IDLE = "CODE_SQL_POOL_MIN_IDLE";
+    public static final String POOL_MAX_ACTIVE = "CODE_SQL_POOL_MAX_ACTIVE";
+    public static final String POOL_MAX_WAIT = "CODE_SQL_POOL_MAX_WAIT";
 
     private EnvConfig() {}
 
@@ -36,10 +40,10 @@ public final class EnvConfig {
         ds.setPassword(env(PASS + suffix));
 
         // 连接池参数 — 可通过环境变量覆盖默认值
-        ds.setInitialSize(intEnv("CODE_SQL_POOL_INITIAL" + suffix, SqlConstants.Pool.DEFAULT_INITIAL_SIZE));
-        ds.setMinIdle(intEnv("CODE_SQL_POOL_MIN_IDLE" + suffix, SqlConstants.Pool.DEFAULT_MIN_IDLE));
-        ds.setMaxActive(intEnv("CODE_SQL_POOL_MAX_ACTIVE" + suffix, SqlConstants.Pool.DEFAULT_MAX_ACTIVE));
-        ds.setMaxWait(intEnv("CODE_SQL_POOL_MAX_WAIT" + suffix, SqlConstants.Pool.DEFAULT_MAX_WAIT_MS));
+        ds.setInitialSize(intEnv(POOL_INITIAL + suffix, SqlConstants.Pool.DEFAULT_INITIAL_SIZE));
+        ds.setMinIdle(intEnv(POOL_MIN_IDLE + suffix, SqlConstants.Pool.DEFAULT_MIN_IDLE));
+        ds.setMaxActive(intEnv(POOL_MAX_ACTIVE + suffix, SqlConstants.Pool.DEFAULT_MAX_ACTIVE));
+        ds.setMaxWait(intEnv(POOL_MAX_WAIT + suffix, SqlConstants.Pool.DEFAULT_MAX_WAIT_MS));
         ds.setTimeBetweenEvictionRunsMillis(SqlConstants.Pool.EVICTION_RUN_MS);
         ds.setMinEvictableIdleTimeMillis(SqlConstants.Pool.MIN_EVICTABLE_IDLE_MS);
         ds.setValidationQuery(SqlConstants.Pool.VALIDATION_QUERY);
