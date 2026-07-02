@@ -36,7 +36,8 @@ mvn exec:java -Dexec.mainClass="com.pgaot.account.auth.JwtUtilTest" -Dexec.class
 cd code-datasheet
 export $(cat .env | xargs)
 mvn compile test-compile
-mvn exec:java -Dexec.mainClass="com.pgaot.datasheet.DatasheetDemoTest" -Dexec.classpathScope="test"
+mvn exec:java -Dexec.mainClass="com.pgaot.datasheet.ShareTest" -Dexec.classpathScope="test"
+mvn exec:java -Dexec.mainClass="com.pgaot.datasheet.SqlSecurityTest" -Dexec.classpathScope="test"
 ```
 
 Run ErrorCode dedup check (mandatory before release):
@@ -109,7 +110,7 @@ The workflow parses the tag to determine `$MODULE`, then runs `mvn -f $MODULE/po
 ## code-sql Key Architecture
 
 - **Entry point**: `SqlTemplate` — sql(), page(), batch(), unsafe(), raw().
-- **Firewall**: Alibaba Druid WallFilter injected at the DataSource proxy filter layer during `SqlTemplate` construction. Two presets: `selectOnly()` (SELECT only, no DDL/writes/dangerous functions) and `readWrite()` (allows CRUD, blocks DDL). WallFilter exceptions contain the keyword "wall" in their message — `SqlTemplate` checks this to distinguish firewall blocks from other failures.
+- **Firewall**: Three presets: `selectOnly()` (SELECT only), `readWrite()` (CRUD, blocks DELETE and DDL), `readWriteDelete()` (CRUD, blocks only DDL). WallFilter exceptions contain "wall" in their message.
 - **Pagination**: `TemplateExecutor.page()` wraps original SQL in `SELECT COUNT(*) FROM (...) _t` for count, then appends `LIMIT/OFFSET`. `PageQuery` validates page >= 1, size in 1-1000.
 - **Multi-datasource**: Environment variables use `_NAME` suffix convention. `EnvConfig.createDataSource("MAIN")` reads `CODE_SQL_URL_MAIN`. Constants (`URL`, `USER`, `PASS`) are public in `EnvConfig` so `JpaTemplate` can reference them.
 - **JPA mode**: Bypasses Druid — uses direct Hibernate connection. No WallFilter protection. Suitable for internal/admin use.
@@ -117,12 +118,17 @@ The workflow parses the tag to determine `$MODULE`, then runs `mvn -f $MODULE/po
 
 ## code-datasheet Key Architecture
 
-- **Entry point**: `DatasheetEngine` exposes three sub-APIs: `tenants()`, `tables()`, `data()`.
-- **Isolation**: MySQL native GRANT — each tenant gets a MySQL user, `CREATE TABLE` auto-executes `GRANT` on the physical table. Physical table naming: `{userId}_{tableName}`. No application-level permission checking needed.
-- **SQL rewriting**: `SqlExecutor` uses Alibaba Druid's SQL parser (`SQLUtils.parseStatements()`) to build an AST, then replaces table name nodes precisely — no regex, won't touch column names or string literals.
-- **Tenant management**: `TenantManager` manages MySQL users via `CREATE USER`/`GRANT`/`REVOKE`/`DROP USER`. `delete()` drops all tenant tables first, then the user.
-- **Metadata**: `ds_table` + `ds_column` tables track table definitions. No permission or share tables (MySQL handles that).
-- **Dependency**: Only depends on `code-sql` (which provides Druid + JdbcTemplate). No Spring, no HTTP layer.
+- **Entry point**: `DatasheetEngine` exposes three sub-APIs: `tables()`, `data()`, `shares()`. Multi-datasource: `fromEnv()` or `fromEnv("NAME")`.
+- **Isolation**: Table prefix — physical table name = `{userId}_{tableName}`. Different tenants can use the same logical table name without conflict.
+- **SQL execution**: `SqlExecutor` uses Druid's SQL parser to build an AST, extracts table names, validates ownership + mode, then replaces logical table names with physical names. Simple string replacement after AST validation.
+- **Table modes**: `READ_ONLY` (SELECT only), `WRITE_ONLY` (no SELECT, no DELETE), `READ_WRITE` (no DELETE), `ALL` (default, all operations). Mode checked in `SqlExecutor` (for sql()) and `RowManager` (for insert/update/delete).
+- **Sharing**: `ShareApi` — fine-grained permissions (SELECT/INSERT/UPDATE/DELETE). Stored in `ds_share` table. Shared users access the table using the owner's userId prefix.
+- **Firewall**: `readWriteDelete()` mode on user SQL — allows CRUD, blocks DDL (DROP/ALTER/TRUNCATE/CREATE). Admin connection has no restrictions.
+- **Soft delete**: `drop()` marks deleted, `restore()` recovers, `purge()` physically drops. `list()` filters deleted tables.
+- **Import/Export**: CSV and JSON import/export via `DataApi`.
+- **Metadata**: `ds_table` (auto-created) + `ds_share`. Column info read from `INFORMATION_SCHEMA` at query time. No `ds_column` table.
+- **Connection model**: Two independent `DruidDataSource` instances — adminSql (no firewall, for DDL) and readWriteSql (readWriteDelete firewall, for user SQL). Must be separate to avoid WallFilter stacking.
+- **Dependency**: Only depends on `code-sql`. No Spring, no HTTP layer.
 
 ## Documentation
 
