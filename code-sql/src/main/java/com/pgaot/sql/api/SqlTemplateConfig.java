@@ -4,6 +4,7 @@ import com.alibaba.druid.wall.WallConfig;
 import com.pgaot.sql.common.config.EnvConfig;
 
 import javax.sql.DataSource;
+import java.util.List;
 
 /**
  * SQL 模板配置 — 数据源 + Druid WallFilter.
@@ -45,6 +46,8 @@ public class SqlTemplateConfig {
         wallConfig.setDescribeAllow(false); wallConfig.setShowAllow(false);
         wallConfig.setUseAllow(false); wallConfig.setMergeAllow(false);
         wallConfig.setFunctionCheck(true);
+        wallConfig.getDenyFunctions().addAll(List.of(
+                "sleep", "benchmark", "load_file", "into outfile", "into dumpfile"));
         return this;
     }
 
@@ -53,6 +56,7 @@ public class SqlTemplateConfig {
         wallConfig.setAlterTableAllow(false); wallConfig.setTruncateAllow(false);
         wallConfig.setRenameTableAllow(false); wallConfig.setCreateTableAllow(false);
         wallConfig.setFunctionCheck(true);
+        wallConfig.getDenyFunctions().addAll(List.of("sleep", "benchmark", "load_file"));
         return this;
     }
 
