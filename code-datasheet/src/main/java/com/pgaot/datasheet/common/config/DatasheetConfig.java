@@ -10,12 +10,11 @@ public class DatasheetConfig {
 
     public DatasheetConfig() {
         this.adminSql     = new SqlTemplate(SqlTemplateConfig.fromEnv());
-        this.readWriteSql = new SqlTemplate(SqlTemplateConfig.fromEnv().readWrite());
+        this.readWriteSql = new SqlTemplate(SqlTemplateConfig.fromEnv().readWriteDelete());
     }
 
-    /** 管理员连接 — DDL/内部 SQL */
     public SqlTemplate adminSql() { return adminSql; }
 
-    /** 读写连接 — 用户 SQL（禁止 DDL/DELETE） */
+    /** 用户 SQL 连接（允许增删改查，禁止 DDL） */
     public SqlTemplate readWriteSql() { return readWriteSql; }
 }

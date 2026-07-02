@@ -79,8 +79,11 @@ import java.util.Map;
 // 只读模式 — 仅允许 SELECT，拦截注入与危险操作
 SqlTemplate safe = new SqlTemplate(SqlTemplateConfig.fromEnv().selectOnly());
 
-// 读写模式 — 允许增删改查，禁止 DDL 和危险函数
+// 读写模式 — 允许增删改，禁止 DDL/DELETE/危险函数
 SqlTemplate rw = new SqlTemplate(SqlTemplateConfig.fromEnv().readWrite());
+
+// 读写删模式 — 允许增删改查，禁止 DDL 和危险函数
+SqlTemplate rwd = new SqlTemplate(SqlTemplateConfig.fromEnv().readWriteDelete());
 
 // 自定义防火墙 — 精细控制
 SqlTemplateConfig config = new SqlTemplateConfig(
@@ -166,7 +169,8 @@ jpa.close();
 | `fromEnv()` | 从 `CODE_SQL_URL/USER/PASS` 创建 |
 | `fromEnv(String name)` | 从 `CODE_SQL_URL_{NAME}` 创建命名数据源 |
 | `selectOnly()` | 仅允许 SELECT，禁止写操作、DDL、危险函数 |
-| `readWrite()` | 允许增删改查，禁止 DDL 和危险函数 |
+| `readWrite()` | 允许 SELECT/INSERT/UPDATE，禁止 DELETE/DDL/危险函数 |
+| `readWriteDelete()` | 允许增删改查，禁止 DDL 和危险函数 |
 
 ### PageQuery
 

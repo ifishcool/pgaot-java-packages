@@ -69,7 +69,7 @@ public class ExportManager {
     @SuppressWarnings("unchecked")
     private List<Map<String, Object>> query(String userId, Long tableId, List<String> cols, String where) {
         TableEntity table = store.getTable(tableId);
-        String physical = TableManager.physicalName(userId, table.getName());
+        String physical = TableManager.physicalName(table.getOwnerId(), table.getName());
         String c = (cols != null && !cols.isEmpty()) ? String.join(", ", cols) : "*";
         String fullSql = "SELECT " + c + " FROM " + physical;
         if (where != null && !where.isBlank()) fullSql += " WHERE " + where;

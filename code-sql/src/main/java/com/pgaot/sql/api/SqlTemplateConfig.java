@@ -60,6 +60,16 @@ public class SqlTemplateConfig {
         return this;
     }
 
+    /** 读写+删除模式 — 允许增删改查，禁止 DDL 和危险函数 */
+    public SqlTemplateConfig readWriteDelete() {
+        wallConfig.setDropTableAllow(false);
+        wallConfig.setAlterTableAllow(false); wallConfig.setTruncateAllow(false);
+        wallConfig.setRenameTableAllow(false); wallConfig.setCreateTableAllow(false);
+        wallConfig.setFunctionCheck(true);
+        wallConfig.getDenyFunctions().addAll(List.of("sleep", "benchmark", "load_file"));
+        return this;
+    }
+
     public DataSource getDataSource() { return dataSource; }
     public WallConfig getWallConfig() { return wallConfig; }
 }

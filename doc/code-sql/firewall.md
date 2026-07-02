@@ -68,20 +68,36 @@ wallConfig.setFunctionCheck(true);
 wallConfig.getDenyFunctions().addAll(List.of("sleep", "benchmark", "load_file"));
 ```
 
+### readWriteDelete()
+
+允许增删改查，拦截 DDL 和危险函数。与 readWrite() 的区别是允许 DELETE。
+
+```java
+// 放行: INSERT, UPDATE, DELETE, SELECT（默认打开）
+// 禁止: DDL（DROP/ALTER/TRUNCATE/CREATE/RENAME）
+wallConfig.setDropTableAllow(false);
+wallConfig.setAlterTableAllow(false);
+wallConfig.setTruncateAllow(false);
+wallConfig.setRenameTableAllow(false);
+wallConfig.setCreateTableAllow(false);
+wallConfig.setFunctionCheck(true);
+wallConfig.getDenyFunctions().addAll(List.of("sleep", "benchmark", "load_file"));
+```
+
 ## 规则对比
 
-| 规则 | selectOnly() | readWrite() |
-|---|---|---|
-| SELECT | 允许 | 允许 |
-| INSERT | 禁止 | 允许 |
-| UPDATE | 禁止 | 允许 |
-| DELETE | 禁止 | 禁止 |
-| DROP/ALTER/TRUNCATE/CREATE/RENAME | 禁止 | 禁止 |
-| SET/MERGE/CALL | 禁止 | 允许 |
-| DESCRIBE/SHOW/USE | 禁止 | 允许 |
-| SELECT INTO | 禁止 | 允许 |
-| sleep/benchmark/load_file | 禁止 | 禁止 |
-| into outfile/dumpfile | 禁止 | N/A |
+| 规则 | selectOnly() | readWrite() | readWriteDelete() |
+|---|---|---|---|---|
+| SELECT | 允许 | 允许 | 允许 |
+| INSERT | 禁止 | 允许 | 允许 |
+| UPDATE | 禁止 | 允许 | 允许 |
+| DELETE | 禁止 | 禁止 | 允许 |
+| DROP/ALTER/TRUNCATE/CREATE/RENAME | 禁止 | 禁止 | 禁止 |
+| SET/MERGE/CALL | 禁止 | 允许 | 允许 |
+| DESCRIBE/SHOW/USE | 禁止 | 允许 | 允许 |
+| SELECT INTO | 禁止 | 允许 | 允许 |
+| sleep/benchmark/load_file | 禁止 | 禁止 | 禁止 |
+| into outfile/dumpfile | 禁止 | N/A | N/A |
 
 ## 自定义防火墙
 

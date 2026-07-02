@@ -1,5 +1,6 @@
 package com.pgaot.datasheet.metadata;
 
+import com.pgaot.datasheet.metadata.entity.ShareEntity;
 import com.pgaot.datasheet.metadata.entity.TableEntity;
 import com.pgaot.sql.api.SqlTemplate;
 
@@ -27,6 +28,71 @@ public class MetadataStore {
                 "updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
                 "PRIMARY KEY (id), " +
                 "UNIQUE KEY uk_owner_table (owner_id, name))");
+        sql.sql("CREATE TABLE IF NOT EXISTS ds_share (" +
+                "id BIGINT NOT NULL AUTO_INCREMENT, " +
+                "table_id BIGINT NOT NULL, " +
+                "from_user VARCHAR(64) NOT NULL, " +
+                "to_user VARCHAR(64) NOT NULL, " +
+                "can_select BOOLEAN NOT NULL DEFAULT TRUE, " +
+                "can_insert BOOLEAN NOT NULL DEFAULT FALSE, " +
+                "can_update BOOLEAN NOT NULL DEFAULT FALSE, " +
+                "can_delete BOOLEAN NOT NULL DEFAULT FALSE, " +
+                "created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
+                "PRIMARY KEY (id), " +
+                "UNIQUE KEY uk_share (table_id, from_user, to_user))");
+    }
+
+    // ===== ds_share =====
+
+    public void upsertShare(Long tableId, String fromUser, String toUser,
+                            boolean cs, boolean ci, boolean cu, boolean cd) {
+        sql.sql("INSERT INTO ds_share (table_id, from_user, to_user, can_select, can_insert, can_update, can_delete) "
+                + "VALUES (?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE "
+                + "can_select=?, can_insert=?, can_update=?, can_delete=?",
+                tableId, fromUser, toUser, cs, ci, cu, cd, cs, ci, cu, cd);
+    }
+
+    public void deleteShare(Long tableId, String fromUser, String toUser) {
+        sql.sql("DELETE FROM ds_share WHERE table_id=? AND from_user=? AND to_user=?", tableId, fromUser, toUser);
+    }
+
+    public ShareEntity getShare(Long tableId, String toUser) {
+        List<Map<String, Object>> rows = sql.sql(
+                "SELECT * FROM ds_share WHERE table_id=? AND to_user=?", tableId, toUser);
+        if (rows.isEmpty()) return null;
+        Map<String, Object> r = rows.get(0);
+        ShareEntity s = new ShareEntity();
+        s.setTableId(((Number) r.get("table_id")).longValue());
+        s.setFromUser((String) r.get("from_user"));
+        s.setToUser((String) r.get("to_user"));
+        s.setCanSelect((Boolean) r.get("can_select"));
+        s.setCanInsert((Boolean) r.get("can_insert"));
+        s.setCanUpdate((Boolean) r.get("can_update"));
+        s.setCanDelete((Boolean) r.get("can_delete"));
+        return s;
+    }
+
+    public List<ShareEntity> getSharesByTable(Long tableId) {
+        return sql.<List<Map<String, Object>>>sql("SELECT * FROM ds_share WHERE table_id=?", tableId)
+                .stream().map(r -> {
+                    ShareEntity s = new ShareEntity();
+                    s.setTableId(((Number) r.get("table_id")).longValue());
+                    s.setFromUser((String) r.get("from_user"));
+                    s.setToUser((String) r.get("to_user"));
+                    s.setCanSelect((Boolean) r.get("can_select"));
+                    s.setCanInsert((Boolean) r.get("can_insert"));
+                    s.setCanUpdate((Boolean) r.get("can_update"));
+                    s.setCanDelete((Boolean) r.get("can_delete"));
+                    return s;
+                }).collect(Collectors.toList());
+    }
+
+    /** 共享给我的表 ID 列表 */
+    public List<Long> getSharedTableIds(String userId) {
+        return sql.<List<Map<String, Object>>>sql(
+                "SELECT DISTINCT table_id FROM ds_share WHERE to_user=?", userId)
+                .stream().map(r -> ((Number) r.get("table_id")).longValue())
+                .collect(Collectors.toList());
     }
 
     // ===== ds_table =====
@@ -53,10 +119,20 @@ public class MetadataStore {
         return rows.isEmpty() ? null : mapToTable(rows.get(0));
     }
 
+    /** 该用户可见的所有表（自己创建的 + 共享给我的） */
     public List<TableEntity> listByUser(String userId) {
-        return sql.<List<Map<String, Object>>>sql(
-                "SELECT * FROM ds_table WHERE owner_id=?", userId)
-                .stream().map(this::mapToTable).collect(Collectors.toList());
+        Set<Long> ids = new LinkedHashSet<>();
+        for (Map<String, Object> r : sql.<List<Map<String, Object>>>sql(
+                "SELECT id FROM ds_table WHERE owner_id=?", userId))
+            ids.add(((Number) r.get("id")).longValue());
+        ids.addAll(getSharedTableIds(userId));
+
+        List<TableEntity> result = new ArrayList<>();
+        for (Long id : ids) {
+            TableEntity t = getTable(id);
+            if (t != null) result.add(t);
+        }
+        return result;
     }
 
     public void dropTable(Long id) {

@@ -4,11 +4,11 @@ import com.pgaot.datasheet.common.constants.DatasheetConstants;
 import com.pgaot.datasheet.common.constants.Messages;
 import com.pgaot.datasheet.exception.DatasheetException;
 import com.pgaot.datasheet.metadata.MetadataStore;
+import com.pgaot.datasheet.metadata.entity.ShareEntity;
 import com.pgaot.datasheet.metadata.entity.TableEntity;
 import com.pgaot.sql.api.SqlTemplate;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class RowManager {
 
@@ -31,7 +31,8 @@ public class RowManager {
 
         TableEntity table = store.getTable(tableId);
         checkMode(table, false);
-        String physical = TableManager.physicalName(userId, table.getName());
+        checkAccess(userId, table, false, false);
+        String physical = TableManager.physicalName(table.getOwnerId(), table.getName());
 
         // 从第一行取列名
         Set<String> colNames = new LinkedHashSet<>(rows.get(0).keySet());
@@ -54,14 +55,16 @@ public class RowManager {
     public int delete(String userId, Long tableId, String whereClause) {
         TableEntity table = store.getTable(tableId);
         checkMode(table, true);
-        String physical = TableManager.physicalName(userId, table.getName());
+        checkAccess(userId, table, true, false);
+        String physical = TableManager.physicalName(table.getOwnerId(), table.getName());
         return sql.sql("DELETE FROM " + physical + " WHERE " + whereClause);
     }
 
     public int update(String userId, Long tableId, String whereClause, Map<String, Object> values) {
         TableEntity table = store.getTable(tableId);
         checkMode(table, false);
-        String physical = TableManager.physicalName(userId, table.getName());
+        checkAccess(userId, table, false, false);
+        String physical = TableManager.physicalName(table.getOwnerId(), table.getName());
 
         List<String> sets = new ArrayList<>();
         List<Object> params = new ArrayList<>();
@@ -72,6 +75,14 @@ public class RowManager {
         if (sets.isEmpty()) return 0;
         return sql.sql("UPDATE " + physical + " SET " + String.join(", ", sets) + " WHERE " + whereClause,
                 params.toArray());
+    }
+
+    private void checkAccess(String userId, TableEntity table, boolean isDelete, boolean isInsert) {
+        if (table.getOwnerId().equals(userId)) return;
+        ShareEntity s = store.getShare(table.getId(), userId);
+        if (s == null) throw DatasheetException.tableNotFound(table.getName() + Messages.TABLE_NO_ACCESS);
+        boolean ok = isDelete ? s.isCanDelete() : isInsert ? s.isCanInsert() : s.isCanUpdate();
+        if (!ok) throw DatasheetException.sqlOperationDenied("共享权限不足: " + table.getName());
     }
 
     private void checkMode(TableEntity table, boolean isDelete) {

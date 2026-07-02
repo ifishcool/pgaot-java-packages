@@ -9,6 +9,7 @@ import com.alibaba.druid.util.JdbcConstants;
 import com.pgaot.datasheet.common.constants.Messages;
 import com.pgaot.datasheet.exception.DatasheetException;
 import com.pgaot.datasheet.metadata.MetadataStore;
+import com.pgaot.datasheet.metadata.entity.ShareEntity;
 import com.pgaot.datasheet.metadata.entity.TableEntity;
 import com.pgaot.sql.api.SqlTemplate;
 
@@ -45,9 +46,16 @@ public class SqlExecutor {
 
     private String validateAndRewrite(String userId, String rawSql, String targetOp, boolean isDelete) {
         Map<String, TableEntity> owned = new HashMap<>();
-        for (TableEntity t : store.listByUser(userId))
-            owned.put(t.getName().toLowerCase(), t);
-        if (owned.isEmpty()) throw DatasheetException.tableNotFound(rawSql);
+        Map<String, ShareEntity> shared = new HashMap<>();
+        for (TableEntity t : store.listByUser(userId)) {
+            String key = t.getName().toLowerCase();
+            if (t.getOwnerId().equals(userId)) owned.put(key, t);
+            else {
+                ShareEntity se = store.getShare(t.getId(), userId);
+                if (se != null) shared.put(key, se);
+            }
+        }
+        if (owned.isEmpty() && shared.isEmpty()) throw DatasheetException.tableNotFound(rawSql);
 
         // 提取表名: 目标表(写操作校验) + 源表(读操作校验)
         Set<String> allNames = new LinkedHashSet<>();
@@ -62,14 +70,25 @@ public class SqlExecutor {
 
         // 权限 + 模式校验
         for (String name : allNames) {
-            TableEntity t = owned.get(name.toLowerCase());
-            if (t == null) throw DatasheetException.tableNotFound(name + Messages.TABLE_NO_ACCESS);
+            TableEntity ot = owned.get(name.toLowerCase());
+            ShareEntity st = shared.get(name.toLowerCase());
+            if (ot == null && st == null)
+                throw DatasheetException.tableNotFound(name + Messages.TABLE_NO_ACCESS);
 
             boolean isTarget = targetNames.contains(name);
-            String opForCheck = isTarget ? targetOp : "SELECT"; // 源表按 SELECT 校验
+            String opForCheck = isTarget ? targetOp : "SELECT";
             boolean deleteCheck = isTarget && isDelete;
 
-            String mode = t.getMode() != null ? t.getMode() : "READ_WRITE";
+            // 共享表: 检查具体权限
+            if (st != null && ot == null) {
+                if (!checkSharedPerm(st, opForCheck, deleteCheck, name))
+                    throw DatasheetException.sqlOperationDenied("共享权限不足: " + name);
+                // 共享表不检查 mode，由 owner 控制
+                continue;
+            }
+
+            // 自己的表: 检查 mode
+            String mode = ot.getMode() != null ? ot.getMode() : "READ_WRITE";
             switch (mode) {
                 case "READ_ONLY":
                     if (!"SELECT".equals(opForCheck))
@@ -84,11 +103,18 @@ public class SqlExecutor {
             }
         }
 
-        // 表名替换
+        // 表名替换: 用 owner 的 userId 拼物理表名
         String rewritten = rawSql;
-        for (String name : allNames)
+        for (String name : allNames) {
+            TableEntity et = owned.get(name.toLowerCase());
+            if (et == null) {
+                ShareEntity se = shared.get(name.toLowerCase());
+                et = se != null ? store.getTable(se.getTableId()) : null;
+            }
+            if (et == null) continue;
             rewritten = rewritten.replaceAll("(?i)\\b" + name + "\\b",
-                    TableManager.physicalName(userId, name));
+                    TableManager.physicalName(et.getOwnerId(), name));
+        }
         return rewritten;
     }
 
@@ -161,6 +187,16 @@ public class SqlExecutor {
 
     private void addDeleteTarget(SQLTableSource src, Set<String> all, Set<String> target) {
         addUpdateTarget(src, all, target);
+    }
+
+    private boolean checkSharedPerm(ShareEntity s, String op, boolean isDelete, String tableName) {
+        return switch (op) {
+            case "SELECT" -> s.isCanSelect();
+            case "INSERT" -> s.isCanInsert();
+            case "UPDATE" -> s.isCanUpdate();
+            case "DELETE" -> s.isCanDelete();
+            default -> false;
+        };
     }
 
     private void addName(SQLTableSource src, Set<String> all, Set<String> target) {
