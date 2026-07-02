@@ -26,14 +26,14 @@
 └────┬─────┘  ┌──────────┐  ┌──────────┐  ┌──────────┐
      │        │RowManager│  │SqlExecutor│  │Export    │
      │        │增删改+    │  │AST提取+   │  │Manager   │
-     │        │类型校验   │  │权限校验+  │  │CSV/JSON  │
+     │        │模式校验   │  │权限校验+  │  │CSV/JSON  │
      │        │+模式校验  │  │表名替换   │  │          │
      ▼        └────┬─────┘  └─────┬────┘  └────┬─────┘
 ┌──────────┐      │              │             │
 │  Table   │      ▼              ▼             ▼
 │  Manager │  ┌──────────────────────────────┐
 │  DDL     │  │       MetadataStore           │
-└────┬─────┘  │    ds_table + ds_column       │
+└────┬─────┘  │    ds_table       │
      │        └──────────────┬───────────────┘
      ▼                       │
 ┌──────────────────────────────────────────┐
@@ -92,7 +92,7 @@ code-datasheet/src/main/java/com/pgaot/datasheet/
 │   └── ExportManager.java            # CSV/JSON
 ├── metadata/
 │   ├── MetadataStore.java            # 元数据 CRUD（含自动建表）
-│   └── entity/                       # TableEntity, ColumnEntity
+│   └── entity/                       # TableEntity
 ├── common/
 │   ├── code/IResultCode.java         # 结果码接口
 │   ├── code/ErrorCode.java           # 30_xxx_xxx

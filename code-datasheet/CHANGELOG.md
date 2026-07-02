@@ -14,8 +14,9 @@
 - 用户 SQL readWrite 防火墙保护（禁止 DDL/DELETE）
 - 内部 SQL 管理员连接（insert/update/delete/export）
 - CSV/JSON 导出（最多 50000 行）
-- 列类型校验（插入时自动转换）
-- 元数据自动建表（首次使用自动 CREATE TABLE IF NOT EXISTS）
+- MySQL 原生类型校验（insert/update 直接走 MySQL，不做应用层校验）
+- INFORMATION_SCHEMA 实时查列信息（无需 ds_column 元数据表）
+- ds_table 元数据自动建表（首次使用自动 CREATE TABLE IF NOT EXISTS）
 - IResultCode 错误码接口 + ErrorCode 分段枚举（30_xxx_xxx），含 main() 去重校验
 - DatasheetException 统一异常 + 7 个静态工厂方法
 - 43+ 项 SQL 安全测试（正常/模式/跨租户/注入/提权/边界/跨表）

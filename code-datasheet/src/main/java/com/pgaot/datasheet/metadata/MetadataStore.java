@@ -1,6 +1,6 @@
 package com.pgaot.datasheet.metadata;
 
-import com.pgaot.datasheet.metadata.entity.*;
+import com.pgaot.datasheet.metadata.entity.TableEntity;
 import com.pgaot.sql.api.SqlTemplate;
 
 import java.util.*;
@@ -27,18 +27,6 @@ public class MetadataStore {
                 "updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
                 "PRIMARY KEY (id), " +
                 "UNIQUE KEY uk_owner_table (owner_id, name))");
-        try { sql.sql("ALTER TABLE ds_table ADD COLUMN mode VARCHAR(16) NOT NULL DEFAULT 'READ_WRITE'"); } catch (Exception ignored) {}
-        sql.sql("CREATE TABLE IF NOT EXISTS ds_column (" +
-                "id BIGINT NOT NULL AUTO_INCREMENT, " +
-                "table_id BIGINT NOT NULL, " +
-                "name VARCHAR(64) NOT NULL, " +
-                "type VARCHAR(32) NOT NULL, " +
-
-                "required BOOLEAN NOT NULL DEFAULT FALSE, " +
-                "sort_order INT NOT NULL DEFAULT 0, " +
-                "created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
-                "PRIMARY KEY (id), " +
-                "UNIQUE KEY uk_table_column (table_id, name))");
     }
 
     // ===== ds_table =====
@@ -50,7 +38,6 @@ public class MetadataStore {
         List<Map<String, Object>> rows = sql.sql(
                 "SELECT * FROM ds_table WHERE owner_id=? AND name=? ORDER BY id DESC LIMIT 1",
                 t.getOwnerId(), t.getName());
-
         t.setId(((Number) rows.get(0).get("id")).longValue());
         return t;
     }
@@ -73,7 +60,6 @@ public class MetadataStore {
     }
 
     public void dropTable(Long id) {
-        sql.sql("DELETE FROM ds_column WHERE table_id=?", id);
         sql.sql("DELETE FROM ds_table WHERE id=?", id);
     }
 
@@ -85,31 +71,16 @@ public class MetadataStore {
         sql.sql("UPDATE ds_table SET mode=? WHERE id=?", mode, id);
     }
 
-    // ===== ds_column =====
-
-    public void insertColumn(ColumnEntity c) {
-        sql.sql("INSERT INTO ds_column (table_id, name, type, required, sort_order) VALUES (?,?,?,?,?)",
-                c.getTableId(), c.getName(), c.getType(), c.isRequired(), c.getSortOrder());
-    }
-
-    public List<ColumnEntity> getColumns(Long tableId) {
-        return sql.<List<Map<String, Object>>>sql(
-                "SELECT * FROM ds_column WHERE table_id=? ORDER BY sort_order", tableId)
-                .stream().map(this::mapToColumn).collect(Collectors.toList());
-    }
-
-    public ColumnEntity getColumn(Long tableId, String name) {
-        List<Map<String, Object>> rows = sql.sql(
-                "SELECT * FROM ds_column WHERE table_id=? AND name=?", tableId, name);
-        return rows.isEmpty() ? null : mapToColumn(rows.get(0));
-    }
-
-    public void dropColumn(Long tableId, String name) {
-        sql.sql("DELETE FROM ds_column WHERE table_id=? AND name=?", tableId, name);
-    }
-
-    public void renameColumn(Long tableId, String oldName, String newName) {
-        sql.sql("UPDATE ds_column SET name=? WHERE table_id=? AND name=?", newName, tableId, oldName);
+    /** 从 INFORMATION_SCHEMA 查询列信息 */
+    public List<Map<String, Object>> getColumns(String physicalTable) {
+        try {
+            return sql.sql("SELECT COLUMN_NAME AS name, DATA_TYPE AS type, "
+                    + "IS_NULLABLE AS nullable FROM INFORMATION_SCHEMA.COLUMNS "
+                    + "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? "
+                    + "AND COLUMN_NAME != 'id' ORDER BY ORDINAL_POSITION", physicalTable);
+        } catch (Exception e) {
+            return List.of();
+        }
     }
 
     // ===== helpers =====
@@ -123,16 +94,5 @@ public class MetadataStore {
         t.setDescription((String) row.get("description"));
         t.setMode((String) row.get("mode"));
         return t;
-    }
-
-    private ColumnEntity mapToColumn(Map<String, Object> row) {
-        ColumnEntity c = new ColumnEntity();
-        c.setId(((Number) row.get("id")).longValue());
-        c.setTableId(((Number) row.get("table_id")).longValue());
-        c.setName((String) row.get("name"));
-        c.setType((String) row.get("type"));
-        c.setRequired((Boolean) row.get("required"));
-        c.setSortOrder(((Number) row.get("sort_order")).intValue());
-        return c;
     }
 }

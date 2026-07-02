@@ -24,15 +24,10 @@ DataApi.insert("tenant_a", "123", {product:"A", amount:100})
     ▼
 RowManager.insert("tenant_a", 123, rows)
     │
-    ├─ 1. 查 MetadataStore → 表名 sales + 列定义 [product(STRING), amount(NUMBER)]
-    ├─ 2. 校验每行数据
-    │    ├─ 必填列是否提供
-    │    ├─ NUMBER → Double.valueOf()
-    │    ├─ DATE → LocalDateTime.parse()
-    │    ├─ BOOLEAN → Boolean.valueOf()
-    │    └─ 类型不匹配 → ROW_VALIDATION_FAILED
+    ├─ 1. 查 MetadataStore → 表名 sales
+    ├─ 2. 从 Map keys 提取列名
     ├─ 3. 拼 INSERT INTO tenant_a_sales (product, amount) VALUES (?, ?)
-    └─ 4. code-sql batch() 执行
+    └─ 4. code-sql batch() 执行（MySQL 原生类型校验）
 ```
 
 ## update / delete 流程
@@ -102,7 +97,7 @@ ExportManager.exportCsv(...)
 | `RowManager.java:25-45` | insert() + 批量 |
 | `RowManager.java:48-52` | delete() |
 | `RowManager.java:55-69` | update() |
-| `RowManager.java:77-87` | convertValue() |
+| `RowManager.java:31-50` | insert() 直接从 Map keys 拼 SQL |
 | `SqlExecutor.java:26-56` | execute() + Druid AST 替换 |
 | `SqlExecutor.java:58-97` | rewrite() + AST 遍历 |
 | `ExportManager.java:23-38` | exportCsv() |

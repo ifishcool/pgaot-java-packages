@@ -132,12 +132,12 @@ code-datasheet/src/main/java/com/pgaot/datasheet/
 │   └── DataApi.java                  # 数据操作
 ├── core/
 │   ├── TableManager.java             # DDL
-│   ├── RowManager.java               # 增删改行 + 模式校验
+│   ├── RowManager.java               # 增删改行 + 模式校验（MySQL原生类型检查）
 │   ├── SqlExecutor.java              # Druid AST 表名提取 + 权限 + 替换
 │   └── ExportManager.java            # CSV/JSON
 ├── metadata/
-│   ├── MetadataStore.java            # ds_table / ds_column CRUD
-│   └── entity/                       # TableEntity, ColumnEntity
+│   ├── MetadataStore.java            # ds_table CRUD + INFORMATION_SCHEMA
+│   └── entity/TableEntity.java
 ├── common/
 │   ├── code/IResultCode.java         # 结果码接口
 │   ├── code/ErrorCode.java           # 30_xxx_xxx

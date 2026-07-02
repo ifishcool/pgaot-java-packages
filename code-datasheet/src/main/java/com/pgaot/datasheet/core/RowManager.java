@@ -2,16 +2,11 @@ package com.pgaot.datasheet.core;
 
 import com.pgaot.datasheet.common.constants.DatasheetConstants;
 import com.pgaot.datasheet.common.constants.Messages;
-import com.pgaot.datasheet.common.model.ColumnType;
 import com.pgaot.datasheet.exception.DatasheetException;
 import com.pgaot.datasheet.metadata.MetadataStore;
-import com.pgaot.datasheet.metadata.entity.ColumnEntity;
 import com.pgaot.datasheet.metadata.entity.TableEntity;
 import com.pgaot.sql.api.SqlTemplate;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -30,24 +25,26 @@ public class RowManager {
     }
 
     public int insert(String userId, Long tableId, List<Map<String, Object>> rows) {
+        if (rows.isEmpty()) return 0;
         if (rows.size() > DatasheetConstants.MAX_INSERT_ROWS)
             throw DatasheetException.rowValidationFailed("max rows: " + DatasheetConstants.MAX_INSERT_ROWS);
 
         TableEntity table = store.getTable(tableId);
         checkMode(table, false);
-        List<ColumnEntity> columns = store.getColumns(tableId);
         String physical = TableManager.physicalName(userId, table.getName());
 
-        String names = columns.stream().map(ColumnEntity::getName).collect(Collectors.joining(", "));
-        String sqlText = "INSERT INTO " + physical + " (" + names + ") VALUES ("
-                + "?" + ", ?".repeat(columns.size() - 1) + ")";
+        // 从第一行取列名
+        Set<String> colNames = new LinkedHashSet<>(rows.get(0).keySet());
+        for (Map<String, Object> r : rows) colNames.addAll(r.keySet());
+        List<String> names = new ArrayList<>(colNames);
+
+        String placeholders = "?" + ", ?".repeat(names.size() - 1);
+        String sqlText = "INSERT INTO " + physical + " (" + String.join(", ", names) + ") VALUES (" + placeholders + ")";
 
         List<Object[]> batch = new ArrayList<>();
         for (Map<String, Object> row : rows) {
             List<Object> values = new ArrayList<>();
-            for (ColumnEntity col : columns) {
-                validateAndCollect(col, row.get(col.getName()), values);
-            }
+            for (String name : names) values.add(row.getOrDefault(name, null));
             batch.add(values.toArray());
         }
         sql.batch(sqlText, batch);
@@ -64,43 +61,17 @@ public class RowManager {
     public int update(String userId, Long tableId, String whereClause, Map<String, Object> values) {
         TableEntity table = store.getTable(tableId);
         checkMode(table, false);
-        List<ColumnEntity> columns = store.getColumns(tableId);
         String physical = TableManager.physicalName(userId, table.getName());
 
         List<String> sets = new ArrayList<>();
         List<Object> params = new ArrayList<>();
-        for (ColumnEntity col : columns) {
-            if (!values.containsKey(col.getName())) continue;
-            sets.add(col.getName() + " = ?");
-            params.add(convertValue(col, values.get(col.getName())));
+        for (Map.Entry<String, Object> e : values.entrySet()) {
+            sets.add(e.getKey() + " = ?");
+            params.add(e.getValue());
         }
         if (sets.isEmpty()) return 0;
         return sql.sql("UPDATE " + physical + " SET " + String.join(", ", sets) + " WHERE " + whereClause,
                 params.toArray());
-    }
-
-    private void validateAndCollect(ColumnEntity col, Object raw, List<Object> target) {
-        if (raw == null) {
-            if (col.isRequired()) throw DatasheetException.rowValidationFailed(col.getName() + " is required");
-            target.add(null);
-            return;
-        }
-        target.add(convertValue(col, raw));
-    }
-
-    private Object convertValue(ColumnEntity col, Object raw) {
-        try {
-            return switch (ColumnType.valueOf(col.getType())) {
-                case STRING  -> raw.toString();
-                case NUMBER  -> Double.valueOf(raw.toString());
-                case DATE    -> raw instanceof LocalDateTime ? raw
-                        : raw instanceof LocalDate ? raw
-                        : LocalDateTime.parse(raw.toString().replace(" ", "T"));
-                case BOOLEAN -> raw instanceof Boolean ? raw : Boolean.valueOf(raw.toString());
-            };
-        } catch (DateTimeParseException | NumberFormatException e) {
-            throw DatasheetException.rowValidationFailed(col.getName() + " type mismatch, expected " + col.getType());
-        }
     }
 
     private void checkMode(TableEntity table, boolean isDelete) {

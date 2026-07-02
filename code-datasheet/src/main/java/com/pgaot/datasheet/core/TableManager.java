@@ -5,11 +5,11 @@ import com.pgaot.datasheet.common.model.ColumnInfo;
 import com.pgaot.datasheet.common.model.ColumnType;
 import com.pgaot.datasheet.exception.DatasheetException;
 import com.pgaot.datasheet.metadata.MetadataStore;
-import com.pgaot.datasheet.metadata.entity.ColumnEntity;
 import com.pgaot.datasheet.metadata.entity.TableEntity;
 import com.pgaot.sql.api.SqlTemplate;
 
 import java.util.List;
+import java.util.Map;
 
 public class TableManager {
 
@@ -21,14 +21,9 @@ public class TableManager {
         this.sql = sql;
     }
 
-    // ===== 表名 =====
-
-    /** 物理表名: userId_name */
     public static String physicalName(String userId, String tableName) {
         return userId + "_" + tableName;
     }
-
-    // ===== DDL 操作 =====
 
     public TableEntity createTable(String ownerId, String name, String title, String description, List<ColumnInfo> columns) {
         if (name == null || name.isBlank()) throw DatasheetException.rowValidationFailed(Messages.TABLE_EMPTY);
@@ -36,11 +31,9 @@ public class TableManager {
         if (store.getTableByName(ownerId, name) != null) throw DatasheetException.tableNameDuplicate(name);
 
         String physical = physicalName(ownerId, name);
-
         StringBuilder ddl = new StringBuilder("CREATE TABLE ").append(physical)
                 .append(" (id BIGINT AUTO_INCREMENT PRIMARY KEY");
-        for (int i = 0; i < columns.size(); i++) {
-            ColumnInfo c = columns.get(i);
+        for (ColumnInfo c : columns) {
             ddl.append(", ").append(c.getName()).append(" ").append(toSqlType(c.getType()));
             if (c.isRequired()) ddl.append(" NOT NULL");
         }
@@ -49,17 +42,7 @@ public class TableManager {
 
         TableEntity t = new TableEntity();
         t.setName(name); t.setTitle(title); t.setOwnerId(ownerId); t.setDescription(description);
-        t = store.insertTable(t);
-
-        for (int i = 0; i < columns.size(); i++) {
-            ColumnInfo c = columns.get(i);
-            ColumnEntity ce = new ColumnEntity();
-            ce.setTableId(t.getId()); ce.setName(c.getName());
-            ce.setType(c.getType().name()); ce.setRequired(c.isRequired());
-            ce.setSortOrder(i);
-            store.insertColumn(ce);
-        }
-        return t;
+        return store.insertTable(t);
     }
 
     public void dropTable(String ownerId, Long tableId) {
@@ -74,23 +57,12 @@ public class TableManager {
         String physical = physicalName(ownerId, t.getName());
         sql.sql("ALTER TABLE " + physical + " ADD COLUMN " + column.getName() + " " + toSqlType(column.getType())
                 + (column.isRequired() ? " NOT NULL" : ""));
-
-        ColumnEntity ce = new ColumnEntity();
-        ce.setTableId(tableId); ce.setName(column.getName());
-        ce.setType(column.getType().name()); ce.setRequired(column.isRequired());
-        ce.setSortOrder(store.getColumns(tableId).size());
-        store.insertColumn(ce);
     }
 
     public void dropColumn(String ownerId, Long tableId, String columnName) {
-        ColumnEntity col = store.getColumn(tableId, columnName);
-        if (col == null) return;
-        if (col.isRequired()) throw DatasheetException.columnRequired(columnName);
-
         TableEntity t = store.getTable(tableId);
         String physical = physicalName(ownerId, t.getName());
         sql.sql("ALTER TABLE " + physical + " DROP COLUMN " + columnName);
-        store.dropColumn(tableId, columnName);
     }
 
     public void renameTable(String ownerId, Long tableId, String newName) {
@@ -103,10 +75,13 @@ public class TableManager {
 
     public void renameColumn(String ownerId, Long tableId, String oldName, String newName) {
         TableEntity t = store.getTable(tableId);
-        ColumnEntity col = store.getColumn(tableId, oldName);
         String physical = physicalName(ownerId, t.getName());
-        sql.sql("ALTER TABLE " + physical + " CHANGE COLUMN " + oldName + " " + newName + " " + toSqlTypeStr(col.getType()));
-        store.renameColumn(tableId, oldName, newName);
+        // 从 INFORMATION_SCHEMA 查类型
+        List<Map<String, Object>> cols = sql.sql(
+                "SELECT DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? AND COLUMN_NAME=?",
+                physical, oldName);
+        String type = cols.isEmpty() ? "VARCHAR(512)" : (String) cols.get(0).get("DATA_TYPE");
+        sql.sql("ALTER TABLE " + physical + " CHANGE COLUMN " + oldName + " " + newName + " " + type);
     }
 
     public void truncate(String ownerId, Long tableId) {
@@ -122,9 +97,5 @@ public class TableManager {
             case DATE   -> "DATETIME";
             case BOOLEAN -> "TINYINT(1)";
         };
-    }
-
-    private String toSqlTypeStr(String typeName) {
-        return toSqlType(ColumnType.valueOf(typeName));
     }
 }

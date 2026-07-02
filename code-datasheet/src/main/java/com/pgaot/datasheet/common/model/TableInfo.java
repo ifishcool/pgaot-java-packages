@@ -2,6 +2,7 @@ package com.pgaot.datasheet.common.model;
 
 import lombok.Data;
 import java.util.List;
+import java.util.Map;
 
 @Data
 public class TableInfo {
@@ -10,5 +11,7 @@ public class TableInfo {
     private String title;
     private String ownerId;
     private String description;
-    private List<ColumnInfo> columns;
+    private String mode;
+    /** 列信息: [{name, type, nullable}] */
+    private List<Map<String, Object>> columns;
 }
