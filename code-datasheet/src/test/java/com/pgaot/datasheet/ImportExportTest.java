@@ -39,8 +39,8 @@ public class ImportExportTest {
         print("1. 建表 [product(STRING), price(NUMBER), qty(NUMBER)]");
         TableInfo t = engine.tables().create(user, "inventory", "库存表", null, List.of(
                 new ColumnInfo("product", ColumnType.STRING, true),
-                new ColumnInfo("price",   ColumnType.NUMBER, false),
-                new ColumnInfo("qty",     ColumnType.NUMBER, false)
+                new ColumnInfo("price",   ColumnType.DECIMAL, false),
+                new ColumnInfo("qty",     ColumnType.DECIMAL, false)
         ));
         tableId = t.getId();
 

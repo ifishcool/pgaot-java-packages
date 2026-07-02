@@ -34,7 +34,7 @@ public class IsolationTest {
         print("1. userA 建表 [name(STRING), score(NUMBER), city(STRING)]");
         TableInfo t = engine.tables().create(userA, "scores", "成绩表", null, List.of(
                 new ColumnInfo("name",  ColumnType.STRING, true),
-                new ColumnInfo("score", ColumnType.NUMBER, false),
+                new ColumnInfo("score", ColumnType.DECIMAL, false),
                 new ColumnInfo("city",  ColumnType.STRING, false)
         ));
         tableId = t.getId();

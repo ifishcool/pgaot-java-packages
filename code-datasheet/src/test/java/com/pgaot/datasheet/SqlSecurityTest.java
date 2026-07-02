@@ -33,7 +33,7 @@ public class SqlSecurityTest {
         String rwId, roId, woId, bobId;
         rwId = engine.tables().create(A, "rw_table", "读写表", null, List.of(
                 new ColumnInfo("data", ColumnType.STRING, true),
-                new ColumnInfo("val",  ColumnType.NUMBER, false))).getId();
+                new ColumnInfo("val",  ColumnType.DECIMAL, false))).getId();
         roId = engine.tables().create(A, "ro_table", "只读表", null, List.of(
                 new ColumnInfo("data", ColumnType.STRING, true))).getId();
         woId = engine.tables().create(A, "wo_table", "只写表", null, List.of(

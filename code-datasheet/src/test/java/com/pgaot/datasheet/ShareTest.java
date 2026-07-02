@@ -37,7 +37,7 @@ public class ShareTest {
         print("1. owner 建表 [name(STRING), score(NUMBER)]");
         TableInfo t = engine.tables().create(owner, "scores", "成绩表", null, List.of(
                 new ColumnInfo("name",  ColumnType.STRING, true),
-                new ColumnInfo("score", ColumnType.NUMBER, false)
+                new ColumnInfo("score", ColumnType.DECIMAL, false)
         ));
         tableId = t.getId();
         check(t != null, "建表失败");
