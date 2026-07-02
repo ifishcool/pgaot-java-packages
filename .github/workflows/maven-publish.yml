@@ -2,7 +2,7 @@ name: Maven Package
 
 on:
   push:
-    tags: ['code-sql/v*', 'code-auth/v*']
+    tags: ['code-sql/v*', 'code-auth/v*', 'code-datasheet/v*']
 
 jobs:
   build:

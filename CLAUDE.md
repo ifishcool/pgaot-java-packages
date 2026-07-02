@@ -8,9 +8,10 @@ PGAOT Java 二方包 Monorepo — each directory under root is an independent Ma
 
 ```
 PGAOT_JAVA_PACKAGE/
-├── code-auth/    # Authentication framework (JWT + Redis + strategy pattern)
-├── code-sql/     # SQL engine (Druid firewall + JdbcTemplate + JPA)
-├── doc/          # Developer documentation (18 Markdown files)
+├── code-auth/       # Authentication framework (JWT + Redis + strategy pattern)
+├── code-sql/        # SQL engine (Druid firewall + JdbcTemplate + JPA)
+├── code-datasheet/  # Multi-tenant datasheet platform (MySQL GRANT + Druid AST)
+├── doc/             # Developer documentation (24 Markdown files)
 └── .github/workflows/maven-publish.yml
 ```
 
@@ -30,6 +31,12 @@ cd code-auth
 export $(cat .env | xargs)
 mvn compile test-compile
 mvn exec:java -Dexec.mainClass="com.pgaot.account.auth.JwtUtilTest" -Dexec.classpathScope="test"
+
+# code-datasheet
+cd code-datasheet
+export $(cat .env | xargs)
+mvn compile test-compile
+mvn exec:java -Dexec.mainClass="com.pgaot.datasheet.DatasheetDemoTest" -Dexec.classpathScope="test"
 ```
 
 Run ErrorCode dedup check (mandatory before release):
@@ -45,7 +52,7 @@ Each module owns a 100,000-range block. Adding a module requires registering its
 |-------|--------|
 | `10_xxx_xxx` | code-auth |
 | `20_xxx_xxx` | code-sql |
-| `30_xxx_xxx` | Reserved |
+| `30_xxx_xxx` | code-datasheet |
 
 Within a module, sub-ranges are allocated by the middle 3 digits (e.g., `20_001` = connection, `20_002` = SQL execution). Every `ErrorCode` enum must have a `main()` method that checks for duplicates.
 
@@ -108,6 +115,15 @@ The workflow parses the tag to determine `$MODULE`, then runs `mvn -f $MODULE/po
 - **JPA mode**: Bypasses Druid — uses direct Hibernate connection. No WallFilter protection. Suitable for internal/admin use.
 - **Environment variables**: `CODE_SQL_URL`, `CODE_SQL_USER`, `CODE_SQL_PASS` (required). Pool params optional with defaults: `CODE_SQL_POOL_INITIAL`(5), `CODE_SQL_POOL_MIN_IDLE`(5), `CODE_SQL_POOL_MAX_ACTIVE`(20), `CODE_SQL_POOL_MAX_WAIT`(60000).
 
+## code-datasheet Key Architecture
+
+- **Entry point**: `DatasheetEngine` exposes three sub-APIs: `tenants()`, `tables()`, `data()`.
+- **Isolation**: MySQL native GRANT — each tenant gets a MySQL user, `CREATE TABLE` auto-executes `GRANT` on the physical table. Physical table naming: `{userId}_{tableName}`. No application-level permission checking needed.
+- **SQL rewriting**: `SqlExecutor` uses Alibaba Druid's SQL parser (`SQLUtils.parseStatements()`) to build an AST, then replaces table name nodes precisely — no regex, won't touch column names or string literals.
+- **Tenant management**: `TenantManager` manages MySQL users via `CREATE USER`/`GRANT`/`REVOKE`/`DROP USER`. `delete()` drops all tenant tables first, then the user.
+- **Metadata**: `ds_table` + `ds_column` tables track table definitions. No permission or share tables (MySQL handles that).
+- **Dependency**: Only depends on `code-sql` (which provides Druid + JdbcTemplate). No Spring, no HTTP layer.
+
 ## Documentation
 
 `doc/README.md` is the entry point. Each feature is documented in its own file (function/flow/design/implementation). When adding a new module or feature, update both the module README and the corresponding doc file(s).
@@ -116,3 +132,4 @@ The workflow parses the tag to determine `$MODULE`, then runs `mvn -f $MODULE/po
 
 - **code-auth**: yuntower-account-java-sdk 1.0.0, jjwt 0.12.6, lettuce-core 6.4.1
 - **code-sql**: druid 1.2.23, spring-jdbc 6.2.7, hibernate-core 6.6.4, mysql-connector-j 9.7.0, lombok 1.18.36 (provided)
+- **code-datasheet**: code-sql 1.0.0, lombok 1.18.36 (provided)

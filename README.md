@@ -11,8 +11,9 @@ PGAOT 平台 Java 二方包 Monorepo。
 
 | 模块                    | 说明                                                |
 | ----------------------- | --------------------------------------------------- |
-| [code-auth](code-auth/) | 通用认证框架 — JWT + 单设备登录 + Redis 持久化      |
-| [code-sql](code-sql/)   | 通用 SQL 引擎 — Druid 防火墙 + SQL自定义 + JPA 支持 |
+| [code-auth](code-auth/)           | 通用认证框架 — JWT + 单设备登录 + Redis 持久化            |
+| [code-sql](code-sql/)             | 通用 SQL 引擎 — Druid 防火墙 + SQL自定义 + JPA 支持       |
+| [code-datasheet](code-datasheet/) | 多租户数据表平台 — MySQL GRANT 隔离 + Druid AST 表名替换 |
 
 ## 安装
 
@@ -50,8 +51,9 @@ PGAOT 平台 Java 二方包 Monorepo。
 按 tag 前缀区分模块：
 
 ```bash
-git tag code-sql/v1.0.0    # 发布 code-sql
-git tag code-auth/v1.0.0   # 发布 code-auth
+git tag code-sql/v1.0.0       # 发布 code-sql
+git tag code-auth/v1.0.0      # 发布 code-auth
+git tag code-datasheet/v1.0.0 # 发布 code-datasheet
 git push --tags
 ```
 

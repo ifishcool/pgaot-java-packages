@@ -29,6 +29,17 @@
 | [code-sql/jpa.md](code-sql/jpa.md) | JPA 模式 |
 | [code-sql/exception.md](code-sql/exception.md) | 异常体系、错误码完整列表 |
 
+## code-datasheet — 多租户数据表平台
+
+| 文档 | 内容 |
+|---|---|
+| [code-datasheet/OVERVIEW.md](code-datasheet/OVERVIEW.md) | 架构总览、目录结构、核心类速查 |
+| [code-datasheet/table.md](code-datasheet/table.md) | 表管理：建表/删表/改列/模式控制 |
+| [code-datasheet/data.md](code-datasheet/data.md) | 数据操作：增删改行、SQL 执行、导出 |
+| [code-datasheet/isolation.md](code-datasheet/isolation.md) | 隔离模型：表前缀 + 目标/源表区分校验 |
+| [code-datasheet/exception.md](code-datasheet/exception.md) | 异常体系、错误码完整列表 |
+
+
 ## 工程实践
 
 | 文档 | 内容 |
