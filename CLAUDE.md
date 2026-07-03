@@ -4,20 +4,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-PGAOT Java 二方包 Monorepo — each directory under root is an independent Maven project. There is no parent POM, no shared dependency versions. Projects share only LICENSE, .gitignore, and CI workflow.
+PGAOT Java 二方包 Monorepo — 父 POM 统一版本管理，子模块独立发布。
 
 ```
 PGAOT_JAVA_PACKAGE/
-├── code-auth/       # Authentication (JWT + Redis + strategy + API tokens)
-├── code-sql/        # SQL engine (Druid firewall + JPA + multi-datasource)
-├── code-datasheet/  # Multi-tenant datasheet (prefix isolation + sharing + Jackson)
-├── doc/             # Developer documentation
-├── install-local.sh # Install jars to ~/.m2 for local development
+├── pom.xml           # Parent POM — dependencyManagement + pluginManagement
+├── code-auth/        # Authentication (JWT + Redis + strategy + API tokens)
+├── code-sql/         # SQL engine (Druid firewall + JPA + multi-datasource)
+├── code-datasheet/   # Multi-tenant datasheet (prefix isolation + sharing + Jackson)
+├── doc/              # Developer documentation
+├── install-local.sh  # Install jars to ~/.m2 for local development
 └── .github/workflows/
     └── maven-publish.yml  # Tag-driven: test → ErrorCode → publish
 ```
 
-**Dependency chain**: `code-sql` ← `code-auth`, `code-sql` ← `code-datasheet`. code-sql is the foundation; changes to it require `./install-local.sh code-sql` before building the other two.
+**Dependency chain**: `code-sql` ← `code-auth`, `code-sql` ← `code-datasheet`. All versions managed in root `pom.xml` via `<dependencyManagement>`. Child POMs declare only `<artifactId>`, no `<version>`.
 
 ## Build & Test
 

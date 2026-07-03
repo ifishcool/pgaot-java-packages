@@ -3,7 +3,7 @@
 [![JDK](https://img.shields.io/badge/JDK-21%2B-blue)](https://adoptium.net/)
 [![License](https://img.shields.io/badge/license-GPL--3.0-green)](LICENSE)
 
-PGAOT 平台 Java 二方包 Monorepo。
+PGAOT 平台 Java 二方包 Monorepo — 父 POM 统一版本管理。
 
 ---
 
@@ -13,7 +13,7 @@ PGAOT 平台 Java 二方包 Monorepo。
 |------|------|------|
 | [code-auth](code-auth/) | 认证框架 — JWT + 单设备登录 + API Token + Redis | 25 pass |
 | [code-sql](code-sql/) | SQL 引擎 — Druid 防火墙 + JPA + 多数据源 + 事务 | 73 pass |
-| [code-datasheet](code-datasheet/) | 多租户数据表 — 前缀隔离 + AST 权限校验 + Jackson 导入导出 + 细粒度共享 | 62 pass |
+| [code-datasheet](code-datasheet/) | 多租户数据表 — 前缀隔离 + AST 权限校验 + Jackson 导入导出 + 共享 | 62 pass |
 
 ## 安装
 
