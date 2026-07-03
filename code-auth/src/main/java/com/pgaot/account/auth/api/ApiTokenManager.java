@@ -2,13 +2,13 @@ package com.pgaot.account.auth.api;
 
 import com.pgaot.account.auth.common.model.TokenInfo;
 import com.pgaot.account.auth.core.token.TokenGenerator;
-import com.pgaot.account.auth.core.token.TokenStore;
 import com.pgaot.account.auth.core.token.scope.Scope;
 import com.pgaot.account.auth.exception.LoginException;
+import com.pgaot.sql.jpa.entity.ApiTokenEntity;
+import com.pgaot.sql.jpa.repository.TokenRepository;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 /**
  * API Token 管理器 — 第三方令牌的创建/校验/吊销.
@@ -28,9 +28,9 @@ import java.util.Map;
  */
 public class ApiTokenManager {
 
-    private final TokenStore store;
+    private final TokenRepository repo;
 
-    public ApiTokenManager(TokenStore store) { this.store = store; }
+    public ApiTokenManager(TokenRepository repo) { this.repo = repo; }
 
     /** 创建 token，返回含完整 token 的 TokenInfo（仅展示一次） */
     public TokenInfo create(String userId, String name, List<String> scopes) {
@@ -42,27 +42,24 @@ public class ApiTokenManager {
         String token = TokenGenerator.generate();
         String hash = TokenGenerator.hash(token);
         String scopesJson = "[" + String.join(",", scopes.stream().map(s -> "\"" + s + "\"").toList()) + "]";
-        TokenInfo info = store.create(userId, name, hash, TokenGenerator.prefix(token), scopesJson, expiresAtSec);
-        info.setToken(token); // 仅创建时返回
+        ApiTokenEntity entity = repo.create(userId, name, hash, TokenGenerator.prefix(token), scopesJson);
+        TokenInfo info = toInfo(entity);
+        info.setToken(token);
         return info;
     }
 
     /** 校验 token，返回 userId。可选 scope 检查 */
     public String validate(String token, String requiredScope) {
         String hash = TokenGenerator.hash(token);
-        Map<String, Object> row = store.findByHash(hash);
-        if (row == null) throw LoginException.apiTokenInvalid("token 无效");
+        ApiTokenEntity entity = repo.findByHash(hash);
+        if (entity == null) throw LoginException.apiTokenInvalid("token 无效");
 
-        String userId = (String) row.get("user_id");
         if (requiredScope != null) {
-            String scopesJson = (String) row.get("scopes");
-            List<String> scopes = parseScopes(scopesJson);
+            List<String> scopes = parseScopes(entity.getScopes());
             if (!Scope.matchesAny(scopes, requiredScope))
                 throw LoginException.apiTokenScopeDenied(requiredScope);
         }
-        // 更新 last_used
-        store.updateLastUsed(((Number) row.get("id")).longValue());
-        return userId;
+        return entity.getUserId();
     }
 
     private static List<String> parseScopes(String json) {
@@ -72,12 +69,21 @@ public class ApiTokenManager {
     }
 
     /** 吊销 token */
-    public void revoke(String ownerId, long tokenId) {
-        store.revoke(tokenId);
-    }
+    public void revoke(String ownerId, long tokenId) { repo.revoke(tokenId); }
 
     /** 列出用户的所有 token */
     public List<TokenInfo> list(String userId) {
-        return store.listByUser(userId);
+        return repo.listByUser(userId).stream().map(this::toInfo).toList();
+    }
+
+    private TokenInfo toInfo(ApiTokenEntity e) {
+        TokenInfo t = new TokenInfo();
+        t.setId(e.getId());
+        t.setUserId(e.getUserId());
+        t.setName(e.getName());
+        t.setPrefix(e.getPrefix());
+        t.setScopes(e.getScopes());
+        if (e.getCreatedAt() != null) t.setCreatedAt(e.getCreatedAt().toString());
+        return t;
     }
 }

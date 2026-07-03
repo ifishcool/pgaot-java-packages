@@ -7,6 +7,7 @@ import com.pgaot.account.auth.core.jwt.TokenPair;
 import com.pgaot.account.auth.core.strategy.LoginStrategy;
 import com.pgaot.account.auth.core.strategy.StrategyRegistry;
 import com.pgaot.account.auth.core.strategy.UserInfo;
+import com.pgaot.sql.jpa.repository.UserRepository;
 
 import com.pgaot.account.auth.exception.LoginException;
 import com.pgaot.account.auth.api.store.TokenStore;
@@ -23,11 +24,14 @@ public class LoginService {
     private final StrategyRegistry registry;
     private final JwtUtil jwt;
     private final TokenStore tokenStore;
+    private final UserRepository userRepo;
 
-    public LoginService(StrategyRegistry registry, LoginConfig config, TokenStore tokenStore) {
+    public LoginService(StrategyRegistry registry, LoginConfig config,
+                        TokenStore tokenStore, UserRepository userRepo) {
         this.registry = registry;
         this.jwt = new JwtUtil(config.getJwtSecret(), config.getAccessExpires(), config.getRefreshExpires());
         this.tokenStore = tokenStore;
+        this.userRepo = userRepo;
     }
 
     /** 登录：选策略 → 认证 → 生成 JWT → 存 token → 返回 */
@@ -42,6 +46,7 @@ public class LoginService {
 
         TokenPair pair = jwt.generate(userInfo.getUserId(), extra);
         tokenStore.save(userInfo.getUserId(), pair.jti(), pair.expiresIn());
+        userRepo.upsert(userInfo.getUserId(), userInfo.getNickname(), userInfo.getAvatar());
 
         return new LoginResult(pair.accessToken(), pair.refreshToken(),
                 userInfo.getUserId(), userInfo.getNickname(), userInfo.getAvatar());

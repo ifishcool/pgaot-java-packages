@@ -7,9 +7,9 @@ import com.pgaot.account.auth.api.model.LoginUser;
 
 import com.pgaot.account.auth.exception.LoginException;
 import com.pgaot.account.auth.core.LoginService;
-import com.pgaot.account.auth.core.token.TokenStore;
-import com.pgaot.sql.api.SqlTemplate;
-import com.pgaot.sql.api.SqlTemplateConfig;
+import com.pgaot.sql.api.JpaTemplate;
+import com.pgaot.sql.jpa.entity.ApiTokenEntity;
+import com.pgaot.sql.jpa.repository.TokenRepository;
 
 import com.pgaot.account.auth.core.yuntower.YuntowerAuthFactory;
 
@@ -32,7 +32,7 @@ public final class LoginEntry {
 
     private static final LoginService SERVICE = YuntowerAuthFactory.fromEnv();
     private static final ApiTokenManager TOKENS = new ApiTokenManager(
-            new TokenStore(new SqlTemplate(SqlTemplateConfig.fromEnv())));
+            new TokenRepository(JpaTemplate.fromEnv("", true, ApiTokenEntity.class)));
 
     private LoginEntry() {}
 

@@ -14,12 +14,12 @@ public class JpaDemoTest {
         u.setNickname("测试用户");
         u.setAvatar("https://cdn.example.com/avatar/10001.png");
         jpa.save(u);
-        System.out.println("新增: id=" + u.getId() + ", userId=" + u.getUserId());
+        System.out.println("新增: id=" + u.getUserId() + ", userId=" + u.getUserId());
 
         // 查询
         jpa.findAll(UserEntity.class).stream().limit(5)
                 .forEach(row -> System.out.println(
-                        "  id=" + row.getId()
+                        "  id=" + row.getUserId()
                         + ", userId=" + row.getUserId()
                         + ", nickname=" + row.getNickname()));
 
@@ -27,10 +27,10 @@ public class JpaDemoTest {
         u.setNickname("新昵称");
         u.setUpdatedAt(java.time.LocalDateTime.now());
         jpa.update(u);
-        System.out.println("已更新: " + jpa.findById(UserEntity.class, u.getId()).getNickname());
+        System.out.println("已更新: " + jpa.findById(UserEntity.class, u.getUserId()).getNickname());
 
         // 删除
-        jpa.delete(UserEntity.class, u.getId());
+        jpa.delete(UserEntity.class, u.getUserId());
         System.out.println("已删除");
 
         jpa.close();

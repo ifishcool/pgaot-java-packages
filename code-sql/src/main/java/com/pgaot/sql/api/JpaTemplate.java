@@ -24,25 +24,36 @@ public class JpaTemplate {
 
     /** 默认数据源 */
     public static JpaTemplate fromEnv(Class<?>... entities) {
-        return fromEnv("", entities);
+        return fromEnv("", false, entities);
     }
 
     /** 命名数据源（CODE_SQL_URL_{name}） */
     public static JpaTemplate fromEnv(String name, Class<?>... entities) {
+        return fromEnv(name, false, entities);
+    }
+
+    /** @param autoDdl true=Hibernate 自动建表 */
+    public static JpaTemplate fromEnv(String name, boolean autoDdl, Class<?>... entities) {
         String suffix = (name != null && !name.isBlank()) ? "_" + name : "";
         return create(
             EnvConfig.env(EnvConfig.URL + suffix),
             EnvConfig.env(EnvConfig.USER + suffix),
             EnvConfig.env(EnvConfig.PASS + suffix),
-            entities);
+            autoDdl, entities);
     }
 
     public static JpaTemplate create(String url, String user, String pass, Class<?>... entities) {
+        return create(url, user, pass, false, entities);
+    }
+
+    /** @param autoDdl true=自动建表(update), false=不操作(none) */
+    public static JpaTemplate create(String url, String user, String pass,
+                                      boolean autoDdl, Class<?>... entities) {
         var cfg = new Configuration()
                 .setProperty("hibernate.connection.url", url)
                 .setProperty("hibernate.connection.username", user)
                 .setProperty("hibernate.connection.password", pass)
-                .setProperty("hibernate.hbm2ddl.auto", "none")
+                .setProperty("hibernate.hbm2ddl.auto", autoDdl ? "update" : "none")
                 .setProperty("hibernate.show_sql", "false");
         for (Class<?> c : entities) cfg.addAnnotatedClass(c);
         return new JpaTemplate(cfg.buildSessionFactory());

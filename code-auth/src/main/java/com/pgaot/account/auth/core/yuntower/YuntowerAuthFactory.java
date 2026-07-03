@@ -7,6 +7,9 @@ import com.pgaot.account.auth.api.LoginType;
 import com.pgaot.account.auth.exception.LoginException;
 import com.pgaot.account.auth.core.strategy.StrategyRegistry;
 import com.pgaot.account.auth.api.store.RedisTokenStore;
+import com.pgaot.sql.api.JpaTemplate;
+import com.pgaot.sql.jpa.entity.UserEntity;
+import com.pgaot.sql.jpa.repository.UserRepository;
 import com.yuntower.account.sdk.YuntowerAccountClient;
 
 import java.util.function.Function;
@@ -46,8 +49,10 @@ public final class YuntowerAuthFactory {
         StrategyRegistry registry = new StrategyRegistry()
                 .register(LoginType.YUNTOWER, new YuntowerStrategy(yuntower, uidBinder));
         long ttl = ttlEnv(AuthConstants.Env.TOKEN_TTL, 604800);
+        UserRepository userRepo = new UserRepository(
+                JpaTemplate.fromEnv("", true, UserEntity.class));
         return new LoginService(registry, new LoginConfig(jwtSecret, ttl, ttl * 2),
-                new RedisTokenStore(redisUri));
+                new RedisTokenStore(redisUri), userRepo);
     }
 
     private static long ttlEnv(String key, long defaultSeconds) {

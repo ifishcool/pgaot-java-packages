@@ -2,176 +2,129 @@ package com.pgaot.datasheet.metadata;
 
 import com.pgaot.datasheet.metadata.entity.ShareEntity;
 import com.pgaot.datasheet.metadata.entity.TableEntity;
+import com.pgaot.sql.api.JpaTemplate;
 import com.pgaot.sql.api.SqlTemplate;
+import com.pgaot.sql.jpa.entity.DsTableEntity;
+import com.pgaot.sql.jpa.repository.ShareRepository;
+import com.pgaot.sql.jpa.repository.TableRepository;
 
 import java.util.*;
-/** 元数据存储 — ds_table + ds_share */
 import java.util.stream.Collectors;
 
+/**
+ * 元数据存储 — 委托 code-sql 的 JPA Repository 管理 ds_table / ds_share.
+ */
 public class MetadataStore {
 
-    private final SqlTemplate sql;
+    private final SqlTemplate sql;          // 仅用于 INFORMATION_SCHEMA 查询
+    private final TableRepository tableRepo;
+    private final ShareRepository shareRepo;
 
-    public MetadataStore(SqlTemplate sql) {
+    public MetadataStore(SqlTemplate sql, JpaTemplate metaJpa) {
         this.sql = sql;
-        initTables();
+        this.tableRepo = new TableRepository(metaJpa);
+        this.shareRepo = new ShareRepository(metaJpa);
     }
 
-    private void initTables() {
-        sql.sql("CREATE TABLE IF NOT EXISTS ds_table (" +
-                "id BIGINT NOT NULL AUTO_INCREMENT, " +
-                "name VARCHAR(64) NOT NULL, " +
-                "title VARCHAR(128) DEFAULT NULL, " +
-                "owner_id VARCHAR(64) NOT NULL, " +
-                "description TEXT DEFAULT NULL, " +
-                "mode VARCHAR(16) NOT NULL DEFAULT 'ALL', " +
-                "created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
-                "updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
-                "PRIMARY KEY (id), " +
-                "UNIQUE KEY uk_owner_table (owner_id, name))");
-        sql.sql("CREATE TABLE IF NOT EXISTS ds_share (" +
-                "id BIGINT NOT NULL AUTO_INCREMENT, " +
-                "table_id BIGINT NOT NULL, " +
-                "from_user VARCHAR(64) NOT NULL, " +
-                "to_user VARCHAR(64) NOT NULL, " +
-                "can_select BOOLEAN NOT NULL DEFAULT TRUE, " +
-                "can_insert BOOLEAN NOT NULL DEFAULT FALSE, " +
-                "can_update BOOLEAN NOT NULL DEFAULT FALSE, " +
-                "can_delete BOOLEAN NOT NULL DEFAULT FALSE, " +
-                "created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
-                "PRIMARY KEY (id), " +
-                "UNIQUE KEY uk_share (table_id, from_user, to_user))");
-    }
-
-    // ===== ds_share =====
-
-    public void upsertShare(Long tableId, String fromUser, String toUser,
-                            boolean cs, boolean ci, boolean cu, boolean cd) {
-        sql.sql("INSERT INTO ds_share (table_id, from_user, to_user, can_select, can_insert, can_update, can_delete) "
-                + "VALUES (?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE "
-                + "can_select=?, can_insert=?, can_update=?, can_delete=?",
-                tableId, fromUser, toUser, cs, ci, cu, cd, cs, ci, cu, cd);
-    }
-
-    public void deleteShare(Long tableId, String fromUser, String toUser) {
-        sql.sql("DELETE FROM ds_share WHERE table_id=? AND from_user=? AND to_user=?", tableId, fromUser, toUser);
-    }
-
-    public ShareEntity getShare(Long tableId, String toUser) {
-        List<Map<String, Object>> rows = sql.sql(
-                "SELECT * FROM ds_share WHERE table_id=? AND to_user=?", tableId, toUser);
-        if (rows.isEmpty()) return null;
-        Map<String, Object> r = rows.get(0);
-        ShareEntity s = new ShareEntity();
-        s.setTableId(((Number) r.get("table_id")).longValue());
-        s.setFromUser((String) r.get("from_user"));
-        s.setToUser((String) r.get("to_user"));
-        s.setCanSelect((Boolean) r.get("can_select"));
-        s.setCanInsert((Boolean) r.get("can_insert"));
-        s.setCanUpdate((Boolean) r.get("can_update"));
-        s.setCanDelete((Boolean) r.get("can_delete"));
-        return s;
-    }
-
-    public List<ShareEntity> getSharesByTable(Long tableId) {
-        return sql.<List<Map<String, Object>>>sql("SELECT * FROM ds_share WHERE table_id=?", tableId)
-                .stream().map(r -> {
-                    ShareEntity s = new ShareEntity();
-                    s.setTableId(((Number) r.get("table_id")).longValue());
-                    s.setFromUser((String) r.get("from_user"));
-                    s.setToUser((String) r.get("to_user"));
-                    s.setCanSelect((Boolean) r.get("can_select"));
-                    s.setCanInsert((Boolean) r.get("can_insert"));
-                    s.setCanUpdate((Boolean) r.get("can_update"));
-                    s.setCanDelete((Boolean) r.get("can_delete"));
-                    return s;
-                }).collect(Collectors.toList());
-    }
-
-    /** 共享给我的表 ID 列表 */
-    public List<Long> getSharedTableIds(String userId) {
-        return sql.<List<Map<String, Object>>>sql(
-                "SELECT DISTINCT table_id FROM ds_share WHERE to_user=?", userId)
-                .stream().map(r -> ((Number) r.get("table_id")).longValue())
-                .collect(Collectors.toList());
-    }
-
-    // ===== ds_table =====
+    // ===== ds_table (委托 TableRepository) =====
 
     public TableEntity insertTable(TableEntity t) {
-        sql.sql("INSERT INTO ds_table (name, title, owner_id, description, mode) VALUES (?,?,?,?,?)",
-                t.getName(), t.getTitle(), t.getOwnerId(), t.getDescription(),
-                t.getMode() != null ? t.getMode() : "ALL");
-        List<Map<String, Object>> rows = sql.sql(
-                "SELECT * FROM ds_table WHERE owner_id=? AND name=? ORDER BY id DESC LIMIT 1",
-                t.getOwnerId(), t.getName());
-        t.setId(((Number) rows.get(0).get("id")).longValue());
+        DsTableEntity e = new DsTableEntity();
+        e.setName(t.getName()); e.setTitle(t.getTitle());
+        e.setOwnerId(t.getOwnerId()); e.setDescription(t.getDescription());
+        e.setMode(t.getMode() != null ? t.getMode() : "ALL");
+        tableRepo.save(e);
+        t.setId(e.getId());
         return t;
     }
 
     public TableEntity getTable(Long id) {
-        List<Map<String, Object>> rows = sql.sql("SELECT * FROM ds_table WHERE id=?", id);
-        return rows.isEmpty() ? null : mapToTable(rows.get(0));
+        DsTableEntity e = tableRepo.findById(id);
+        return e == null ? null : toTableEntity(e);
     }
 
     public TableEntity getTableByName(String ownerId, String name) {
-        List<Map<String, Object>> rows = sql.sql(
-                "SELECT * FROM ds_table WHERE owner_id=? AND name=?", ownerId, name);
-        return rows.isEmpty() ? null : mapToTable(rows.get(0));
+        DsTableEntity e = tableRepo.findByName(ownerId, name);
+        return e == null ? null : toTableEntity(e);
     }
 
-    /** 该用户可见的所有表（自己创建的 + 共享给我的） */
     public List<TableEntity> listByUser(String userId) {
         Set<Long> ids = new LinkedHashSet<>();
-        for (Map<String, Object> r : sql.<List<Map<String, Object>>>sql(
-                "SELECT id FROM ds_table WHERE owner_id=?", userId))
-            ids.add(((Number) r.get("id")).longValue());
-        ids.addAll(getSharedTableIds(userId));
+        for (DsTableEntity e : tableRepo.listByOwner(userId))
+            ids.add(e.getId());
+        ids.addAll(shareRepo.getSharedTableIds(userId));
 
         List<TableEntity> result = new ArrayList<>();
         for (Long id : ids) {
-            TableEntity t = getTable(id);
-            if (t != null) result.add(t);
+            DsTableEntity e = tableRepo.findById(id);
+            if (e != null) result.add(toTableEntity(e));
         }
         return result;
     }
 
-    /** 删除表元数据 */
     public void dropTable(Long id) {
-        sql.sql("DELETE FROM ds_share WHERE table_id=?", id);
-        sql.sql("DELETE FROM ds_table WHERE id=?", id);
+        shareRepo.deleteByTable(id);
+        tableRepo.delete(id);
     }
 
     public void updateTable(Long id, String name, String title) {
-        sql.sql("UPDATE ds_table SET name=?, title=? WHERE id=?", name, title, id);
+        tableRepo.update(id, name, title);
     }
 
     public void setMode(Long id, String mode) {
-        sql.sql("UPDATE ds_table SET mode=? WHERE id=?", mode, id);
+        tableRepo.setMode(id, mode);
     }
 
-    /** 从 INFORMATION_SCHEMA 查询列信息 */
+    // ===== ds_share (委托 ShareRepository) =====
+
+    public void upsertShare(Long tableId, String from, String to,
+                            boolean cs, boolean ci, boolean cu, boolean cd) {
+        shareRepo.upsert(tableId, from, to, cs, ci, cu, cd);
+    }
+
+    public void deleteShare(Long tableId, String from, String to) {
+        shareRepo.delete(tableId, from, to);
+    }
+
+    public ShareEntity getShare(Long tableId, String userId) {
+        var s = shareRepo.get(tableId, userId);
+        return s == null ? null : toShareEntity(s);
+    }
+
+    public List<ShareEntity> getSharesByTable(Long tableId) {
+        return shareRepo.listByTable(tableId).stream()
+                .map(this::toShareEntity).collect(Collectors.toList());
+    }
+
+    public List<Long> getSharedTableIds(String userId) {
+        return shareRepo.getSharedTableIds(userId);
+    }
+
+    // ===== INFORMATION_SCHEMA（保留原生 SQL） =====
+
     public List<Map<String, Object>> getColumns(String physicalTable) {
         try {
             return sql.sql("SELECT COLUMN_NAME AS name, DATA_TYPE AS type, "
                     + "IS_NULLABLE AS nullable FROM INFORMATION_SCHEMA.COLUMNS "
                     + "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? "
                     + "AND COLUMN_NAME != 'id' ORDER BY ORDINAL_POSITION", physicalTable);
-        } catch (Exception e) {
-            return List.of();
-        }
+        } catch (Exception e) { return List.of(); }
     }
 
-    // ===== helpers =====
-
-    private TableEntity mapToTable(Map<String, Object> row) {
+    private TableEntity toTableEntity(DsTableEntity e) {
         TableEntity t = new TableEntity();
-        t.setId(((Number) row.get("id")).longValue());
-        t.setName((String) row.get("name"));
-        t.setTitle((String) row.get("title"));
-        t.setOwnerId((String) row.get("owner_id"));
-        t.setDescription((String) row.get("description"));
-        t.setMode((String) row.get("mode"));
+        t.setId(e.getId()); t.setName(e.getName()); t.setTitle(e.getTitle());
+        t.setOwnerId(e.getOwnerId()); t.setDescription(e.getDescription());
+        t.setMode(e.getMode());
         return t;
+    }
+
+    private ShareEntity toShareEntity(com.pgaot.sql.jpa.entity.DsShareEntity s) {
+        ShareEntity se = new ShareEntity();
+        se.setTableId(s.getTableId()); se.setFromUser(s.getFromUser());
+        se.setToUser(s.getToUser());
+        se.setCanSelect(s.isCanSelect()); se.setCanInsert(s.isCanInsert());
+        se.setCanUpdate(s.isCanUpdate()); se.setCanDelete(s.isCanDelete());
+        return se;
     }
 }

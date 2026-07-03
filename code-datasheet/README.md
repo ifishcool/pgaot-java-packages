@@ -173,7 +173,7 @@ code-datasheet/src/main/java/com/pgaot/datasheet/
 │   ├── SqlExecutor.java              # AST 提取 + 权限 + 替换
 │   └── ExportManager.java            # 导入导出
 ├── metadata/
-│   ├── MetadataStore.java            # ds_table + ds_share + INFO_SCHEMA
+│   ├── MetadataStore.java            # 委托 code-sql JPA + INFO_SCHEMA
 │   └── entity/                       # TableEntity, ShareEntity
 ├── common/
 │   ├── code/ErrorCode.java           # 30_xxx_xxx

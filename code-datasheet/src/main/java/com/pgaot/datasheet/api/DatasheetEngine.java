@@ -23,7 +23,7 @@ public class DatasheetEngine {
 
     public DatasheetEngine(DatasheetConfig config) {
         SqlTemplate adminSql = config.adminSql();
-        MetadataStore store = new MetadataStore(adminSql);
+        MetadataStore store = new MetadataStore(adminSql, config.metaJpa());
 
         TableManager tableManager = new TableManager(store, adminSql);
         RowManager rowManager = new RowManager(store, adminSql);

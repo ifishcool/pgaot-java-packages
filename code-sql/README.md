@@ -262,7 +262,7 @@ code-sql/
     ├── api/
     │   ├── SqlTemplate.java            # 核心 API（SQL/分页/批量/unsafe）
     │   ├── SqlTemplateConfig.java      # 防火墙安全配置
-    │   └── JpaTemplate.java            # JPA 模板
+    │   └── JpaTemplate.java            # JPA 模板（支持 autoDdl）
     │
     ├── core/executor/
     │   ├── TemplateExecutor.java       # JdbcTemplate 封装 + 分页
@@ -281,7 +281,17 @@ code-sql/
     │       └── Messages.java           # 提示信息常量
     │
     ├── exception/SqlException.java     # 异常（6 个静态工厂）
-    └── jpa/entity/UserEntity.java      # PGAOT 用户实体
+    └── jpa/
+        ├── entity/
+        │   ├── UserEntity.java          # 用户
+        │   ├── ApiTokenEntity.java      # API Token
+        │   ├── DsTableEntity.java       # 数据表元数据
+        │   └── DsShareEntity.java       # 共享记录
+        └── repository/
+            ├── UserRepository.java
+            ├── TokenRepository.java
+            ├── TableRepository.java
+            └── ShareRepository.java
 ```
 
 ## License

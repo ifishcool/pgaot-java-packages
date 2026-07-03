@@ -14,7 +14,11 @@
 - 拦截 50+ 种注入与绕过手法（注释绕过、大小写、多空格、多语句、UNION、报错、盲注等）
 - 批量操作（SqlTemplate.batch()，JdbcTemplate.batchUpdate）
 - 原生 JDBC 执行器（RawExecutor，存储过程 + 手动事务）
-- JPA 模式（JpaTemplate，Hibernate CRUD）
+- JPA 模式（JpaTemplate，Hibernate CRUD + autoDdl 自动建表）
+- readWriteDelete 防火墙模式（允许增删改查，禁止 DDL）
+- JPA 仓储层（UserRepository / TokenRepository）
+- PGAOT 用户实体（pgaot_user，userId 主键）
+- API Token 实体（api_token，含 user_id 索引）
 - 多数据源（EnvConfig，环境变量 `CODE_SQL_URL_{NAME}` 命名后缀）
 - 连接池可配（CODE_SQL_POOL_* 环境变量，含默认值）
 - IResultCode 错误码接口 + ErrorCode 分段枚举（20_xxx_xxx），含 main() 去重校验
