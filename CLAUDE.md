@@ -14,8 +14,7 @@ PGAOT_JAVA_PACKAGE/
 ├── doc/             # Developer documentation
 ├── install-local.sh # Install jars to ~/.m2 for local development
 └── .github/workflows/
-    ├── ci.yml             # CI: compile + test + ErrorCode on push/PR
-    └── maven-publish.yml  # Publish on tag push
+    └── maven-publish.yml  # Tag-driven: test → ErrorCode → publish
 ```
 
 **Dependency chain**: `code-sql` ← `code-auth`, `code-sql` ← `code-datasheet`. code-sql is the foundation; changes to it require `./install-local.sh code-sql` before building the other two.
@@ -94,21 +93,18 @@ All user-facing hardcoded strings belong in `Messages.java`. Numeric constants (
 
 ## CI/CD
 
-Two GitHub Actions workflows:
+**Tag-driven**: push a tag → test that module → publish. One workflow (`.github/workflows/maven-publish.yml`):
 
-**CI** (`.github/workflows/ci.yml`) — runs on every push/PR to main:
-- Compiles all 3 modules in dependency order (code-sql → code-auth → code-datasheet)
-- Runs JUnit 5 tests (160 test cases: code-auth 25, code-sql 73, code-datasheet 62)
-- `@Tag("integration")` tests auto-skip without DB/Redis; CI with secrets runs full suite
-- Runs ErrorCode dedup for all modules
-
-**Publish** (`.github/workflows/maven-publish.yml`) — triggered by git tags:
 ```bash
-git tag code-sql/v1.0.1    # Publishes only code-sql
-git tag code-auth/v1.0.2   # Publishes only code-auth
+git tag code-sql/v1.0.1       # test + publish code-sql only
+git tag code-auth/v1.0.2      # install code-sql → test + publish code-auth
+git tag code-datasheet/v1.0.3 # install code-sql → test + publish code-datasheet
 git push --tags
 ```
-Before deploy: install code-sql (if downstream), compile, run tests, ErrorCode dedup. Requires `GH_PACKAGES_TOKEN` + DB/Redis secrets in GitHub Actions.
+
+Pipeline per module: `compile → unit+integration tests (160 total) → ErrorCode dedup → deploy`
+
+Requires 8 GitHub Secrets: `GH_PACKAGES_TOKEN`, `YUNTOWER_APP_ID`, `YUNTOWER_APP_SECRET`, `CODE_AUTH_JWT_SECRET`, `CODE_AUTH_REDIS_URI`, `CODE_SQL_URL`, `CODE_SQL_USER`, `CODE_SQL_PASS`.
 
 ## code-auth Key Architecture
 
