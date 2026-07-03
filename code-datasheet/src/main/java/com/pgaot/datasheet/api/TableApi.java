@@ -59,19 +59,7 @@ public class TableApi {
         tableManager.renameColumn(ownerId, parseId(tableId), oldName, newName);
     }
 
-    /** 恢复软删除 */
-    public void restore(String ownerId, String tableId) {
-        checkOwner(ownerId, tableId);
-        tableManager.restoreTable(parseId(tableId));
-    }
-
-    /** 物理删除（不可恢复） */
-    public void purge(String ownerId, String tableId) {
-        checkOwner(ownerId, tableId);
-        tableManager.purgeTable(ownerId, parseId(tableId));
-    }
-
-    /** 查看该租户有权限的所有表（不含已删除） */
+    /** 查看该租户有权限的所有表 */
     public List<TableInfo> list(String userId) {
         return store.listByUser(userId).stream()
                 .map(t -> toTableInfo(t, userId, t.getName())).collect(Collectors.toList());

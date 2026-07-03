@@ -23,12 +23,8 @@ public class ImportExportTest {
         String user = "demo_io";
         String tableId;
 
-        // 清理
         for (TableInfo old : engine.tables().list(user))
             try { engine.tables().drop(user, old.getId()); } catch (Exception ignored) {}
-        // 物理清除之前软删除的
-        for (TableInfo old : engine.tables().list(user))
-            try { engine.tables().purge(user, old.getId()); } catch (Exception ignored) {}
 
         // ════════════════════════
         // 阶段一: 建表 + 初始数据
@@ -74,8 +70,6 @@ public class ImportExportTest {
         pause();
         System.out.println("  === 阶段三: 导入 CSV ===\n");
 
-        engine.tables().drop(user, tableId);
-        engine.tables().restore(user, tableId);
         engine.tables().truncate(user, tableId);
 
         print("5. 导入 CSV 数据");
@@ -121,36 +115,15 @@ public class ImportExportTest {
         printRows(r8);
 
         // ════════════════════════
-        // 阶段六: 软删除 + 恢复
+        // 阶段六: 删除
         // ════════════════════════
         pause();
-        System.out.println("  === 阶段六: 软删除 + 恢复 ===\n");
+        System.out.println("  === 阶段六: 删除 ===\n");
 
-        print("9. 软删除 inventory");
+        print("9. 删除 inventory");
         engine.tables().drop(user, tableId);
-
-        print("10. 查表 — 已删除应不存在");
-        List<TableInfo> list10 = engine.tables().list(user);
-        check(list10.stream().noneMatch(ti -> ti.getId().equals(tableId)), "已删除仍有");
-
-        print("11. 恢复 inventory");
-        engine.tables().restore(user, tableId);
-        List<TableInfo> list11 = engine.tables().list(user);
-        check(list11.stream().anyMatch(ti -> ti.getId().equals(tableId)), "恢复后应有");
-        List<Map<String, Object>> r11 = engine.data().sql(user, "SELECT * FROM inventory");
-        check(r11.size() == 2, "恢复后数据应还在");
-        printRows(r11);
-
-        // ════════════════════════
-        // 阶段七: 物理删除
-        // ════════════════════════
-        pause();
-        System.out.println("  === 阶段七: 物理删除 ===\n");
-
-        print("12. 物理删除 inventory（不可恢复）");
-        engine.tables().purge(user, tableId);
         TableInfo gone = engine.tables().get(tableId);
-        check(gone == null, "物理删除后应 null");
+        check(gone == null, "删除后应 null");
 
         System.out.println("\n==========================================");
         System.out.println("  总计: " + (pass + fail) + " | PASS: " + pass + " | FAIL: " + fail);

@@ -46,18 +46,7 @@ public class TableManager {
         return store.insertTable(t);
     }
 
-    /** 软删除（标记删除，不 DROP 表） */
     public void dropTable(String ownerId, Long tableId) {
-        store.softDelete(tableId);
-    }
-
-    /** 恢复软删除 */
-    public void restoreTable(Long tableId) {
-        store.restore(tableId);
-    }
-
-    /** 物理删除（DROP TABLE + 清元数据） */
-    public void purgeTable(String ownerId, Long tableId) {
         TableEntity t = store.getTable(tableId);
         if (t != null) {
             String physical = physicalName(ownerId, t.getName());

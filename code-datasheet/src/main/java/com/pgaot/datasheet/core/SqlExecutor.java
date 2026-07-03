@@ -80,28 +80,17 @@ public class SqlExecutor {
             String opForCheck = isTarget ? targetOp : "SELECT";
             boolean deleteCheck = isTarget && isDelete;
 
-            // 共享表: 检查具体权限
+            // 共享表: 检查具体权限 + 所有者设定的 mode
             if (st != null && ot == null) {
                 if (!checkSharedPerm(st, opForCheck, deleteCheck, name))
                     throw DatasheetException.sqlOperationDenied("共享权限不足: " + name);
-                // 共享表不检查 mode，由 owner 控制
+                TableEntity ownerTable = store.getTable(st.getTableId());
+                if (ownerTable != null)
+                    checkMode(ownerTable, opForCheck, deleteCheck, name);
                 continue;
             }
 
-            // 自己的表: 检查 mode
-            String mode = ot.getMode() != null ? ot.getMode() : "ALL";
-            switch (mode) {
-                case "READ_ONLY":
-                    if (!"SELECT".equals(opForCheck))
-                        throw DatasheetException.sqlOperationDenied(String.format(Messages.MODE_READ_ONLY, name));
-                    break;
-                case "WRITE_ONLY":
-                    if ("SELECT".equals(opForCheck))
-                        throw DatasheetException.sqlOperationDenied(String.format(Messages.MODE_WRITE_ONLY, name));
-                    if (deleteCheck)
-                        throw DatasheetException.sqlOperationDenied(String.format(Messages.MODE_DELETE_BLOCKED, name));
-                    break;
-            }
+            checkMode(ot, opForCheck, deleteCheck, name);
         }
 
         // 表名替换: 用 owner 的 userId 拼物理表名
@@ -188,6 +177,23 @@ public class SqlExecutor {
 
     private void addDeleteTarget(SQLTableSource src, Set<String> all, Set<String> target) {
         addUpdateTarget(src, all, target);
+    }
+
+    private void checkMode(TableEntity t, String op, boolean deleteCheck, String name) {
+        if (t == null) return;
+        String mode = t.getMode() != null ? t.getMode() : "ALL";
+        switch (mode) {
+            case "READ_ONLY":
+                if (!"SELECT".equals(op))
+                    throw DatasheetException.sqlOperationDenied(String.format(Messages.MODE_READ_ONLY, name));
+                break;
+            case "WRITE_ONLY":
+                if ("SELECT".equals(op))
+                    throw DatasheetException.sqlOperationDenied(String.format(Messages.MODE_WRITE_ONLY, name));
+                if (deleteCheck)
+                    throw DatasheetException.sqlOperationDenied(String.format(Messages.MODE_DELETE_BLOCKED, name));
+                break;
+        }
     }
 
     private boolean checkSharedPerm(ShareEntity s, String op, boolean isDelete, String tableName) {

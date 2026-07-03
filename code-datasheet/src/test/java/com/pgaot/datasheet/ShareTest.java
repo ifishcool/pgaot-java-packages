@@ -14,7 +14,7 @@ public class ShareTest {
     static int pass = 0, fail = 0;
 
     public static void main(String[] args) {
-        DatasheetEngine engine = DatasheetEngine.fromEnv();
+        DatasheetEngine engine = DatasheetEngine.fromEnv("DATA");
 
         System.out.println("==========================================");
         System.out.println("  code-datasheet 共享功能测试 (全sql)");

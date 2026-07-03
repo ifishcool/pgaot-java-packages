@@ -29,11 +29,6 @@
 - CSV/JSON 导入（importCsv/importJson）
 - 导出再导入支持数据迁移
 
-**软删除**
-- 软删除（标记删除，不 DROP 表）
-- 恢复（restore）
-- 物理删除（purge，DROP TABLE + 清元数据）
-
 **隔离与安全**
 - 表前缀隔离（userId_tableName）
 - Druid AST 表名提取（目标表/源表区分校验）
@@ -49,7 +44,7 @@
 **测试**
 - 27 步全 SQL 共享测试（ShareTest）
 - 68 项 SQL 安全测试（SqlSecurityTest）
-- 13 步导入导出 + 软删除测试（ImportExportTest）
+- 导入导出测试（ImportExportTest）
 - 22 步集成隔离测试（IsolationTest）
 
 ### 依赖

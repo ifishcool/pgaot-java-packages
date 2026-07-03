@@ -78,6 +78,16 @@ public class DataApi {
         return exportManager.exportCsv(userId, parseId(tableId), columns, whereClause);
     }
 
+    /** 更新指定行的指定列 */
+    public int updateCell(String userId, String tableId, Object rowId, String column, Object value) {
+        return update(userId, tableId, "id = " + rowId, Map.of(column, value));
+    }
+
+    /** 删除指定行 */
+    public int deleteRow(String userId, String tableId, Object rowId) {
+        return delete(userId, tableId, "id = " + rowId);
+    }
+
     /** 导出 JSON 字符串 */
     public String exportJson(String userId, String tableId, List<String> columns, String whereClause) {
         return exportManager.exportJson(userId, parseId(tableId), columns, whereClause);

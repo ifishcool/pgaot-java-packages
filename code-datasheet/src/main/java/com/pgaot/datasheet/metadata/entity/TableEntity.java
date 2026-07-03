@@ -11,5 +11,4 @@ public class TableEntity {
     private String ownerId;
     private String description;
     private String mode;
-    private boolean deleted;
 }

@@ -46,8 +46,9 @@ CODE_SQL_URL_MAIN   # 命名数据源 MAIN
 ## 快速开始
 
 ```java
+// 多数据源支持
 DatasheetEngine engine = DatasheetEngine.fromEnv();          // 默认数据源
-DatasheetEngine engine = DatasheetEngine.fromEnv("MAIN");    // 命名数据源
+DatasheetEngine engine2 = DatasheetEngine.fromEnv("MAIN");   // 命名数据源
 
 // 建表
 TableInfo t = engine.tables().create("alice", "sales", "销售表", null, List.of(
@@ -66,12 +67,8 @@ List<Map<String, Object>> rows = engine.data().sql("bob",
 engine.data().importCsv("alice", t.getId(), "product,amount\nA,100");
 String csv = engine.data().exportCsv("alice", t.getId(), null, null);
 
-// 软删除 + 恢复
+// 删除表
 engine.tables().drop("alice", t.getId());
-engine.tables().restore("alice", t.getId());
-
-// 物理删除
-engine.tables().purge("alice", t.getId());
 ```
 
 ---
@@ -83,11 +80,9 @@ engine.tables().purge("alice", t.getId());
 | 方法 | 说明 |
 |---|---|
 | `create(ownerId, name, title, desc, columns)` | 建表 |
-| `drop(ownerId, tableId)` | 软删除（可恢复） |
-| `restore(ownerId, tableId)` | 恢复软删除 |
-| `purge(ownerId, tableId)` | 物理删除（不可恢复） |
+| `drop(ownerId, tableId)` | 删除表 |
 | `rename/truncate/addColumn/dropColumn/renameColumn` | 表结构操作，需 owner |
-| `list(userId)` | 该用户所有表（不含已删除） |
+| `list(userId)` | 该用户所有表 |
 | `listWithSource(userId)` | 所有表 + 来源(OWNED/SHARED) + 权限 |
 | `get(tableId)` | 表结构（列信息实时从 INFORMATION_SCHEMA 读取） |
 | `setMode(ownerId, tableId, TableMode)` | 模式控制 |
@@ -116,8 +111,11 @@ engine.tables().purge("alice", t.getId());
 |---|---|
 | `insert(userId, tableId, row/rows)` | 插入（最多 1000 行） |
 | `update/delete` | 按条件更新/删除 |
+| `updateCell(userId, tableId, rowId, col, val)` | 更新指定行列 |
+| `deleteRow(userId, tableId, rowId)` | 删除指定行 |
 | `sql(userId, sql)` | 执行用户 SQL（SELECT/INSERT/UPDATE/DELETE，禁止 DDL） |
 | `exportCsv/exportJson` | 导出 |
+| `importCsv/importJson` | 导入 |
 | `importCsv/importJson` | 导入 |
 
 ### ShareApi

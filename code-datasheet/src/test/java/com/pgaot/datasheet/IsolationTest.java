@@ -11,7 +11,7 @@ public class IsolationTest {
     static int pass = 0, fail = 0;
 
     public static void main(String[] args) {
-        DatasheetEngine engine = DatasheetEngine.fromEnv();
+        DatasheetEngine engine = DatasheetEngine.fromEnv("DATA");
 
         System.out.println("==========================================");
         System.out.println("  code-datasheet 隔离测试");
@@ -22,11 +22,9 @@ public class IsolationTest {
         String userB = "tenant_b";
         String tableId;
 
-        for (String u : List.of(userA, userB)) {
-            for (TableInfo old : engine.tables().list(u)) {
+        for (String u : List.of(userA, userB))
+            for (TableInfo old : engine.tables().list(u))
                 try { engine.tables().drop(u, old.getId()); } catch (Exception ignored) {}
-            }
-        }
 
         pause();
         System.out.println("  === 阶段一：建表 + 批量插入 ===\n");

@@ -25,12 +25,10 @@ public class MetadataStore {
                 "owner_id VARCHAR(64) NOT NULL, " +
                 "description TEXT DEFAULT NULL, " +
                 "mode VARCHAR(16) NOT NULL DEFAULT 'ALL', " +
-                "deleted BOOLEAN NOT NULL DEFAULT FALSE, " +
                 "created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
                 "updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
                 "PRIMARY KEY (id), " +
                 "UNIQUE KEY uk_owner_table (owner_id, name))");
-        try { sql.sql("ALTER TABLE ds_table ADD COLUMN deleted BOOLEAN NOT NULL DEFAULT FALSE"); } catch (Exception ignored) {}
         sql.sql("CREATE TABLE IF NOT EXISTS ds_share (" +
                 "id BIGINT NOT NULL AUTO_INCREMENT, " +
                 "table_id BIGINT NOT NULL, " +
@@ -126,7 +124,7 @@ public class MetadataStore {
     public List<TableEntity> listByUser(String userId) {
         Set<Long> ids = new LinkedHashSet<>();
         for (Map<String, Object> r : sql.<List<Map<String, Object>>>sql(
-                "SELECT id FROM ds_table WHERE owner_id=? AND deleted=0", userId))
+                "SELECT id FROM ds_table WHERE owner_id=?", userId))
             ids.add(((Number) r.get("id")).longValue());
         ids.addAll(getSharedTableIds(userId));
 
@@ -138,17 +136,7 @@ public class MetadataStore {
         return result;
     }
 
-    /** 软删除 */
-    public void softDelete(Long id) {
-        sql.sql("UPDATE ds_table SET deleted=1 WHERE id=?", id);
-    }
-
-    /** 恢复软删除 */
-    public void restore(Long id) {
-        sql.sql("UPDATE ds_table SET deleted=0 WHERE id=?", id);
-    }
-
-    /** 硬删除（清除元数据） */
+    /** 删除表元数据 */
     public void dropTable(Long id) {
         sql.sql("DELETE FROM ds_share WHERE table_id=?", id);
         sql.sql("DELETE FROM ds_table WHERE id=?", id);
