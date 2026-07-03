@@ -10,7 +10,7 @@ PGAOT Java 二方包 Monorepo — each directory under root is an independent Ma
 PGAOT_JAVA_PACKAGE/
 ├── code-auth/       # Authentication framework (JWT + Redis + strategy pattern)
 ├── code-sql/        # SQL engine (Druid firewall + JdbcTemplate + JPA)
-├── code-datasheet/  # Multi-tenant datasheet platform (MySQL GRANT + Druid AST)
+├── code-datasheet/  # Multi-tenant datasheet platform (prefix isolation + sharing)
 ├── doc/             # Developer documentation (24 Markdown files)
 └── .github/workflows/maven-publish.yml
 ```
@@ -124,8 +124,8 @@ The workflow parses the tag to determine `$MODULE`, then runs `mvn -f $MODULE/po
 - **Table modes**: `READ_ONLY` (SELECT only), `WRITE_ONLY` (no SELECT, no DELETE), `READ_WRITE` (no DELETE), `ALL` (default, all operations). Mode checked in `SqlExecutor` (for sql()) and `RowManager` (for insert/update/delete).
 - **Sharing**: `ShareApi` — fine-grained permissions (SELECT/INSERT/UPDATE/DELETE). Stored in `ds_share` table. Shared users access the table using the owner's userId prefix.
 - **Firewall**: `readWriteDelete()` mode on user SQL — allows CRUD, blocks DDL (DROP/ALTER/TRUNCATE/CREATE). Admin connection has no restrictions.
-- **Soft delete**: `drop()` marks deleted, `restore()` recovers, `purge()` physically drops. `list()` filters deleted tables.
-- **Import/Export**: CSV and JSON import/export via `DataApi`.
+- **Import/Export**: CSV and JSON import/export via `DataApi`. Also `importCsv`/`importJson` for bulk data loading.
+- **Convenience methods**: `updateCell()` (single cell update) and `deleteRow()` (delete by id) on `DataApi`.
 - **Metadata**: `ds_table` (auto-created) + `ds_share`. Column info read from `INFORMATION_SCHEMA` at query time. No `ds_column` table.
 - **Connection model**: Two independent `DruidDataSource` instances — adminSql (no firewall, for DDL) and readWriteSql (readWriteDelete firewall, for user SQL). Must be separate to avoid WallFilter stacking.
 - **Dependency**: Only depends on `code-sql`. No Spring, no HTTP layer.
