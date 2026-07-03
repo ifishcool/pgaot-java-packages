@@ -23,6 +23,10 @@
 - 接口完整 Javadoc 注释
 - 交互式登录测试（LoginTest：自动打开浏览器 → 授权 → 全流程）
 - TokenStore 功能测试（TokenStoreTest，Redis 读写验证）
+- API Token 第三方令牌系统（create/validate/revoke/list）
+- pat_ 前缀 + SHA-256 哈希存储
+- Scope 权限控制（datasheet:data / *:*:*）
+- ApiTokenTest 全流程测试
 - JWT 单元测试（JwtUtilTest）
 
 ### 依赖
@@ -33,3 +37,4 @@
 | lettuce-core | 6.4.1 | Redis |
 | yuntower-account-java-sdk | 1.0.0 | 云塔 OAuth |
 | jackson-databind | 2.18.3 | JSON（云塔 SDK 传递） |
+| code-sql | 1.0.0 | SQL 引擎（API Token 存储） |

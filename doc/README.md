@@ -17,6 +17,7 @@
 | [code-auth/strategy.md](code-auth/strategy.md) | 策略模式：扩展新登录方式 |
 | [code-auth/redis-and-config.md](code-auth/redis-and-config.md) | Redis 客户端、配置体系 |
 | [code-auth/exception.md](code-auth/exception.md) | 异常体系、错误码完整列表 |
+| [code-auth/token.md](code-auth/token.md) | API Token：第三方令牌创建/校验/吊销 |
 
 ## code-sql — 通用 SQL 引擎
 

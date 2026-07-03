@@ -57,6 +57,11 @@
             <artifactId>lettuce-core</artifactId>
             <version>6.4.1.RELEASE</version>
         </dependency>
+        <dependency>
+            <groupId>com.pgaot</groupId>
+            <artifactId>code-sql</artifactId>
+            <version>1.0.0</version>
+        </dependency>
     </dependencies>
 
     <distributionManagement>

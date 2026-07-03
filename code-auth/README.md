@@ -3,7 +3,7 @@
 [![JDK](https://img.shields.io/badge/JDK-21%2B-blue)](https://adoptium.net/)
 [![License](https://img.shields.io/badge/license-GPL--3.0-green)](LICENSE)
 
-PGAOT平台通用认证框架 — 策略模式 + JWT + 单设备登录 + Redis 持久化。
+PGAOT平台通用认证框架 — 策略模式 + JWT + 单设备登录 + API Token + Redis 持久化。
 
 ---
 
@@ -60,6 +60,9 @@ CODE_AUTH_JWT_SECRET     # JWT 签名密钥，至少 32 字符（必填）
 CODE_AUTH_REDIS_URI      # Redis 连接地址（必填）
 CODE_AUTH_TOKEN_TTL      # Token 有效秒数（可选，默认 604800 = 7 天）
 CODE_AUTH_KEY_PREFIX     # Redis Key 前缀（可选，默认 login:token）
+CODE_SQL_URL             # MySQL 连接地址（必填，API Token 存储）
+CODE_SQL_USER            # 数据库用户名（必填）
+CODE_SQL_PASS            # 数据库密码（必填）
 ```
 
 ---
@@ -162,6 +165,31 @@ redis.set("key", "value", 3600);
 
 ---
 
+### API Token（第三方令牌）
+
+```java
+import com.pgaot.account.auth.core.token.scope.Scope;
+
+// 创建 — 仅展示一次完整 token
+TokenInfo t = LoginEntry.tokens().create("alice", "数据表",
+    List.of(Scope.Datasheet.DATA));
+String token = t.getToken(); // pat_xxx... 存好
+
+// 校验
+String userId = LoginEntry.tokens().validate(token, "datasheet:data");
+
+// 管理
+LoginEntry.tokens().list("alice");        // 查看所有
+LoginEntry.tokens().revoke("alice", id);  // 吊销
+```
+
+| Scope | 值 | 说明 |
+|---|---|---|
+| `Datasheet.DATA` | `datasheet:data` | 数据表读写删 |
+| `SUPER` | `*:*:*` | 超级管理员 |
+
+---
+
 ## 项目结构
 
 ```
@@ -170,6 +198,7 @@ code-auth/
     ├── api/
     │   ├── LoginEntry.java              # 入口
     │   ├── LoginType.java               # 登录方式常量
+    │   ├── ApiTokenManager.java         # API Token 管理
     │   ├── model/
     │   │   ├── LoginResult.java         # 登录返回
     │   │   └── LoginUser.java           # 校验返回
@@ -188,6 +217,10 @@ code-auth/
     │   │   ├── StrategyRegistry.java    # 注册中心
     │   │   └── UserInfo.java            # 认证结果
     │   ├── redis/Redis.java             # 通用缓存
+    │   ├── token/                        # API Token
+    │   │   ├── TokenGenerator.java       # pat_ 生成 + SHA-256
+    │   │   ├── TokenStore.java           # MySQL CRUD
+    │   │   └── scope/Scope.java          # 权限范围
     │   └── yuntower/
     │       ├── YuntowerAuthFactory.java # 工厂
     │       └── YuntowerStrategy.java    # 云塔实现

@@ -7,6 +7,9 @@ import com.pgaot.account.auth.api.model.LoginUser;
 
 import com.pgaot.account.auth.exception.LoginException;
 import com.pgaot.account.auth.core.LoginService;
+import com.pgaot.account.auth.core.token.TokenStore;
+import com.pgaot.sql.api.SqlTemplate;
+import com.pgaot.sql.api.SqlTemplateConfig;
 
 import com.pgaot.account.auth.core.yuntower.YuntowerAuthFactory;
 
@@ -28,6 +31,8 @@ import java.util.Map;
 public final class LoginEntry {
 
     private static final LoginService SERVICE = YuntowerAuthFactory.fromEnv();
+    private static final ApiTokenManager TOKENS = new ApiTokenManager(
+            new TokenStore(new SqlTemplate(SqlTemplateConfig.fromEnv())));
 
     private LoginEntry() {}
 
@@ -63,4 +68,7 @@ public final class LoginEntry {
     public static void logout(String jwtToken) {
         SERVICE.logout(jwtToken);
     }
+
+    /** API Token 管理 */
+    public static ApiTokenManager tokens() { return TOKENS; }
 }

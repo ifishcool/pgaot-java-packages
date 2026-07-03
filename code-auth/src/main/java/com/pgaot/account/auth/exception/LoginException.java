@@ -57,6 +57,14 @@ public class LoginException extends RuntimeException {
         return new LoginException(ErrorCode.TOKEN_KICKED);
     }
 
+    public static LoginException apiTokenInvalid(String detail) {
+        return new LoginException(ErrorCode.API_TOKEN_INVALID, detail);
+    }
+
+    public static LoginException apiTokenScopeDenied(String scope) {
+        return new LoginException(ErrorCode.API_TOKEN_SCOPE_DENIED, scope);
+    }
+
     /** 业务错误码 */
     public int getCode() { return code; }
 }

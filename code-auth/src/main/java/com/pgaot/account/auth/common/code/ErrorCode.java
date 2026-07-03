@@ -9,7 +9,8 @@ import java.util.Set;
  * <pre>
  * 编号段分配:
  *   10_001_xxx  认证模块
- *   10_002_xxx  Token 模块
+ *   10_002_xxx  JWT Token 模块
+ *   10_003_xxx  API Token 模块
  * </pre>
  */
 public enum ErrorCode implements IResultCode {
@@ -19,9 +20,13 @@ public enum ErrorCode implements IResultCode {
     AUTH_UNSUPPORTED_TYPE(10_001_002, "不支持的登录方式"),
     AUTH_CONFIG_MISSING(10_001_004, "缺少配置"),
 
-    // ===== Token 模块 (10_002_xxx) =====
+    // ===== JWT Token 模块 (10_002_xxx) =====
     TOKEN_INVALID(10_002_001, "Token 无效或已过期"),
     TOKEN_KICKED(10_002_003, "账号在其他设备登录"),
+
+    // ===== API Token 模块 (10_003_xxx) =====
+    API_TOKEN_INVALID(10_003_001, "API Token 无效"),
+    API_TOKEN_SCOPE_DENIED(10_003_002, "API Token 权限不足"),
     ;
 
     private final int code;
