@@ -23,17 +23,19 @@
     │    │    ├─ yuntower.auth().getToken(code)         → TokenResponse
     │    │    ├─ yuntower.user().getUserInfo(accessToken) → UserProfileResponse
     │    │    ├─ uidBinder.apply(profile.getUid())        → localUserId
-    │    │    └─ return new UserInfo(localUserId, nickname, avatar)
+    │    │    └─ return new UserInfo(localUserId, nickname, avatar, email)
     │    │
-    │    ├─ Step 3: 构建 extra Map {nickname, avatar, ...extraFields}
+    │    ├─ Step 3: 构建 extra Map {nickname, avatar, email, ...extraFields}
     │    │
     │    ├─ Step 4: jwt.generate(userId, extra) → TokenPair
     │    │
     │    ├─ Step 5: tokenStore.save(userId, jti, accessExpires)
     │    │    └─ redis.setex("login:token:{userId}", jti, ttl)
     │    │
-    │    └─ Step 6: return LoginResult(accessToken, refreshToken, userId, nickname, avatar)
-    │         └─ 内部: success=true, code=0, message="ok"
+    │    ├─ Step 6: userRepo.upsert(userId, nickname, avatar, email)
+    │    │    └─ 持久化到 pgaot_user 表
+    │    │
+    │    └─ Step 7: return LoginResult(accessToken, refreshToken, userId, nickname, avatar, email)
     │
     ├─ catch LoginException → return LoginResult(e.getCode(), e.getMessage())
     │    └─ 内部: success=false, tokens=null
@@ -91,8 +93,13 @@ public class LoginResult {
     private final String userId;        // 用户 ID
     private final String nickname;      // 昵称
     private final String avatar;        // 头像 URL
+    private final String email;         // 邮箱
 }
 ```
+
+### UserInfo 结构
+
+策略认证成功后的内部传递对象，含 userId/nickname/avatar/email/extra。extra 写入 JWT payload，email 同时写入 JWT + 数据库。
 
 ## 关键源码
 
@@ -100,6 +107,7 @@ public class LoginResult {
 |---|---|---|
 | `LoginEntry.java:41-49` | 9 行 | login 入口 + 异常转换 |
 | `LoginService.java:25-31` | 7 行 | 构造，组装依赖 |
-| `LoginService.java:34-48` | 15 行 | 核心登录流程 |
-| `YuntowerStrategy.java:25-34` | 10 行 | 云塔 code → UserInfo |
+| `LoginService.java:34-48` | 15 行 | 核心登录流程（含邮箱持久化） |
+| `YuntowerStrategy.java:25-34` | 10 行 | 云塔 code → UserInfo（含 email） |
 | `YuntowerAuthFactory.java:27-51` | 25 行 | 从环境变量构建 LoginService |
+| `UserRepository.java:25-38` | 14 行 | upsert 持久化 userId/nickname/avatar/email |

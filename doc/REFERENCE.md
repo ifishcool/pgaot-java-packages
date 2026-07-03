@@ -24,6 +24,7 @@
 | `CODE_SQL_POOL_MIN_IDLE` | 可选 | `5` | 最小空闲连接 |
 | `CODE_SQL_POOL_MAX_ACTIVE` | 可选 | `20` | 最大活跃连接 |
 | `CODE_SQL_POOL_MAX_WAIT` | 可选 | `60000` | 获取连接最大等待 ms |
+| `CODE_SQL_AUTO_DDL` | 可选 | `false` | Hibernate 自动建表（生产应设 false） |
 
 多数据源加 `_NAME` 后缀，如 `CODE_SQL_URL_MAIN`、`CODE_SQL_POOL_MAX_ACTIVE_MAIN`。
 
@@ -38,6 +39,8 @@
 | jjwt-impl | 0.12.6 | JWT 实现（runtime） |
 | jjwt-jackson | 0.12.6 | JWT JSON（runtime） |
 | lettuce-core | 6.4.1 | Redis 客户端 |
+| code-sql | 1.0.0 | SQL 引擎（JPA 方式读 api_token/users） |
+| JUnit Jupiter | 5.11.4 | 单元测试（test） |
 
 ### code-sql
 
@@ -47,4 +50,14 @@
 | spring-jdbc | 6.2.7 | JdbcTemplate |
 | hibernate-core | 6.6.4 | JPA |
 | mysql-connector-j | 9.7.0 | MySQL 驱动 |
+| lombok | 1.18.36 | 编译期代码生成（provided） |
+| JUnit Jupiter | 5.11.4 | 单元测试（test） |
+
+### code-datasheet
+
+| 依赖 | 版本 | 用途 |
+|---|---|---|
+| code-sql | 1.0.0 | SQL 执行引擎 |
+| jackson-databind | 2.18.3 | JSON 导入导出 |
+| jackson-dataformat-csv | 2.18.3 | CSV 导入导出 |
 | lombok | 1.18.36 | 编译期代码生成（provided） |

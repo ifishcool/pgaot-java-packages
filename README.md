@@ -9,11 +9,11 @@ PGAOT 平台 Java 二方包 Monorepo。
 
 ## 模块
 
-| 模块                    | 说明                                                |
-| ----------------------- | --------------------------------------------------- |
-| [code-auth](code-auth/)           | 通用认证框架 — JWT + 单设备登录 + Redis 持久化            |
-| [code-sql](code-sql/)             | 通用 SQL 引擎 — Druid 防火墙 + SQL自定义 + JPA 支持       |
-| [code-datasheet](code-datasheet/) | 多租户数据表平台 — MySQL GRANT 隔离 + Druid AST 表名替换 |
+| 模块 | 说明 | 测试 |
+|------|------|------|
+| [code-auth](code-auth/) | 认证框架 — JWT + 单设备登录 + API Token + Redis | 25 pass |
+| [code-sql](code-sql/) | SQL 引擎 — Druid 防火墙 + JPA + 多数据源 + 事务 | 73 pass |
+| [code-datasheet](code-datasheet/) | 多租户数据表 — 前缀隔离 + AST 权限校验 + Jackson 导入导出 + 细粒度共享 | 62 pass |
 
 ## 安装
 
@@ -45,6 +45,17 @@ PGAOT 平台 Java 二方包 Monorepo。
     <version>版本</version>
 </dependency>
 ```
+
+## 本地联调
+
+改完底层模块（如 `code-sql`）后，无需发 GitHub Packages 即可让上层模块引用：
+
+```bash
+./install-local.sh code-sql    # 只装一个
+./install-local.sh             # 全部按依赖顺序安装
+```
+
+Maven 优先从 `~/.m2/repository` 解析依赖，`mvn install` 就是将 jar 装到本地仓库。
 
 ## 如何发布
 

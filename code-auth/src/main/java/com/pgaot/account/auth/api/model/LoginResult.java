@@ -22,12 +22,13 @@ public class LoginResult {
     private final String userId;
     private final String nickname;
     private final String avatar;
+    private final String email;
 
     /**
      * 登录成功 — 由 LoginService 内部调用.
      */
     public LoginResult(String accessToken, String refreshToken, String userId,
-                       String nickname, String avatar) {
+                       String nickname, String avatar, String email) {
         this.success = true;
         this.code = 0;
         this.message = "ok";
@@ -36,6 +37,7 @@ public class LoginResult {
         this.userId = userId;
         this.nickname = nickname;
         this.avatar = avatar;
+        this.email = email;
     }
 
     /**
@@ -53,6 +55,7 @@ public class LoginResult {
         this.userId = null;
         this.nickname = null;
         this.avatar = null;
+        this.email = null;
     }
 
     /** 是否登录成功 */
@@ -78,4 +81,7 @@ public class LoginResult {
 
     /** 头像 URL（成功时有效） */
     public String getAvatar() { return avatar; }
+
+    /** 邮箱（成功时有效） */
+    public String getEmail() { return email; }
 }

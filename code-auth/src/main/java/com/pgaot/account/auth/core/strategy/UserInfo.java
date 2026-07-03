@@ -12,30 +12,28 @@ public class UserInfo {
     private final String userId;
     private final String nickname;
     private final String avatar;
+    private final String email;
     private final Map<String, Object> extra;
 
-    /** @param userId   你在自己系统中的用户唯一标识 */
-    /** @param nickname 昵称 */
-    /** @param avatar   头像 URL */
     public UserInfo(String userId, String nickname, String avatar) {
-        this(userId, nickname, avatar, null);
+        this(userId, nickname, avatar, null, null);
     }
 
-    /**
-     * @param userId   你在自己系统中的用户唯一标识
-     * @param nickname 昵称
-     * @param avatar   头像 URL
-     * @param extra    额外字段，会写入 JWT，后续 LoginUser 可读取
-     */
-    public UserInfo(String userId, String nickname, String avatar, Map<String, Object> extra) {
+    public UserInfo(String userId, String nickname, String avatar, String email) {
+        this(userId, nickname, avatar, email, null);
+    }
+
+    public UserInfo(String userId, String nickname, String avatar, String email, Map<String, Object> extra) {
         this.userId = userId;
         this.nickname = nickname;
         this.avatar = avatar;
+        this.email = email;
         this.extra = extra;
     }
 
     public String getUserId() { return userId; }
     public String getNickname() { return nickname; }
     public String getAvatar() { return avatar; }
+    public String getEmail() { return email; }
     public Map<String, Object> getExtra() { return extra; }
 }

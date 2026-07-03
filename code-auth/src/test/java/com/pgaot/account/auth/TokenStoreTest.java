@@ -2,30 +2,39 @@ package com.pgaot.account.auth;
 
 import com.pgaot.account.auth.api.store.RedisTokenStore;
 import com.pgaot.account.auth.api.store.TokenStore;
+import org.junit.jupiter.api.*;
 
-/** TokenStore 测试 — Redis 持久化 */
-public class TokenStoreTest {
+import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-    public static void main(String[] args) {
-        String uri = System.getenv("CODE_AUTH_REDIS_URI");
-        if (uri == null || uri.isBlank()) {
-            System.err.println("请设置 CODE_AUTH_REDIS_URI");
-            return;
-        }
+@Tag("integration")
+class TokenStoreTest {
 
-        TokenStore store = new RedisTokenStore(uri);
+    private static TokenStore store;
 
+    @BeforeAll
+    static void requireRedis() {
+        EnvLoader.load();
+        String uri = EnvLoader.get("CODE_AUTH_REDIS_URI");
+        assumeTrue(uri != null && !uri.isBlank(), "跳过：需要 Redis");
+        store = new RedisTokenStore(uri);
+    }
+
+    @Test
+    void shouldSaveAndRetrieveJti() {
         store.save("user-1", "jti-a", 43200);
-        System.out.println("设备A登录: jti-a → " + store.getJti("user-1"));
+        assertEquals("jti-a", store.getJti("user-1"));
+    }
 
+    @Test
+    void shouldOverwriteJtiOnSecondLogin() {
+        store.save("user-1", "jti-a", 43200);
         store.save("user-1", "jti-b", 43200);
-        System.out.println("设备B登录: jti-b → " + store.getJti("user-1"));
+        assertEquals("jti-b", store.getJti("user-1"));
+    }
 
-        System.out.println("\n现在去查 Redis: redis-cli -a vifanlyrs -n 1 get '" + TokenStore.key("user-1") + "'");
-        System.out.println("按回车删除...");
-        try { System.in.read(); } catch (Exception ignored) {}
-
-        store.remove("user-1");
-        System.out.println("已删除");
+    @AfterAll
+    static void cleanup() {
+        if (store != null) store.remove("user-1");
     }
 }

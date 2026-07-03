@@ -11,7 +11,7 @@ import java.util.List;
  *
  * <pre>{@code
  * UserRepository repo = new UserRepository(JpaTemplate.fromEnv(UserEntity.class));
- * repo.upsert("alice", "Alice", "https://...");
+ * repo.upsert("alice", "Alice", "https://...", "alice@example.com");
  * UserEntity u = repo.findById("alice");
  * }</pre>
  */
@@ -22,11 +22,12 @@ public class UserRepository {
     public UserRepository(JpaTemplate jpa) { this.jpa = jpa; }
 
     /** 保存或更新（按 userId 判断） */
-    public void upsert(String userId, String nickname, String avatar) {
+    public void upsert(String userId, String nickname, String avatar, String email) {
         UserEntity existing = jpa.findById(UserEntity.class, userId);
         if (existing != null) {
             existing.setNickname(nickname);
             existing.setAvatar(avatar);
+            existing.setEmail(email);
             existing.setUpdatedAt(LocalDateTime.now());
             jpa.update(existing);
         } else {
@@ -34,6 +35,7 @@ public class UserRepository {
             u.setUserId(userId);
             u.setNickname(nickname);
             u.setAvatar(avatar);
+            u.setEmail(email);
             jpa.save(u);
         }
     }

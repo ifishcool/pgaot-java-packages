@@ -7,7 +7,7 @@ RuntimeException
   └── DatasheetException
        ├── code: int
        ├── message: String
-       └── 7 个静态工厂方法
+       └── 8 个静态工厂方法
 ```
 
 ## 静态工厂
@@ -19,6 +19,7 @@ RuntimeException
 | `notOwner()` | 无 | `30_001_003` | 非 owner 操作表结构 |
 | `columnRequired(name)` | String | `30_001_006` | 删除必填列 |
 | `rowValidationFailed(detail)` | String | `30_003_001` | 数据校验失败 |
+| `exportPermissionDenied()` | 无 | `30_003_003` | 无导出权限 |
 | `sqlOperationDenied(op)` | String | `30_004_002` | SQL 操作不允许 |
 
 ## 错误码
@@ -33,6 +34,7 @@ RuntimeException
 | `30_001_006` | `COLUMN_REQUIRED` | 必填列不能删除 |
 | `30_003_001` | `ROW_VALIDATION_FAILED` | 数据校验失败 |
 | `30_003_002` | `ROW_COUNT_EXCEEDED` | 行数超限 |
+| `30_003_003` | `EXPORT_PERMISSION_DENIED` | 无导出权限 |
 | `30_004_001` | `SQL_TABLE_NOT_REGISTERED` | 表未注册 |
 | `30_004_002` | `SQL_OPERATION_DENIED` | 操作类型不允许 |
 | `30_004_003` | `SQL_PARSE_FAILED` | SQL 解析失败 |

@@ -15,13 +15,15 @@ import com.pgaot.sql.api.SqlTemplate;
  * engine.shares().share("alice", tableId, "bob", SharePermission.ALL);
  * }</pre>
  */
-public class DatasheetEngine {
+public class DatasheetEngine implements AutoCloseable {
 
+    private final DatasheetConfig config;
     private final TableApi tableApi;
     private final DataApi dataApi;
     private final ShareApi shareApi;
 
     public DatasheetEngine(DatasheetConfig config) {
+        this.config = config;
         SqlTemplate adminSql = config.adminSql();
         MetadataStore store = new MetadataStore(adminSql, config.metaJpa());
 
@@ -44,4 +46,8 @@ public class DatasheetEngine {
     public TableApi tables() { return tableApi; }
     public DataApi data() { return dataApi; }
     public ShareApi shares() { return shareApi; }
+
+    /** 关闭所有连接池 */
+    @Override
+    public void close() { config.close(); }
 }

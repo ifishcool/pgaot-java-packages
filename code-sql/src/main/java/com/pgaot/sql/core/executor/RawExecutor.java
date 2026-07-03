@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 /** Raw JDBC 执行器 — 存储过程/大事务 */
 public class RawExecutor {
@@ -31,12 +32,42 @@ public class RawExecutor {
     }
 
     public void transaction(Runnable task) {
-        try (Connection conn = dataSource.getConnection()) {
+        Connection conn = null;
+        try {
+            conn = dataSource.getConnection();
             conn.setAutoCommit(false);
             task.run();
             conn.commit();
         } catch (Exception e) {
+            if (conn != null) {
+                try { conn.rollback(); } catch (SQLException ignored) {}
+            }
             throw SqlException.executionFailed(e.getMessage());
+        } finally {
+            if (conn != null) {
+                try { conn.close(); } catch (SQLException ignored) {}
+            }
+        }
+    }
+
+    /** 支持返回值的带事务执行 */
+    public <T> T transactionCall(Callable<T> task) {
+        Connection conn = null;
+        try {
+            conn = dataSource.getConnection();
+            conn.setAutoCommit(false);
+            T result = task.call();
+            conn.commit();
+            return result;
+        } catch (Exception e) {
+            if (conn != null) {
+                try { conn.rollback(); } catch (SQLException ignored) {}
+            }
+            throw SqlException.executionFailed(e.getMessage());
+        } finally {
+            if (conn != null) {
+                try { conn.close(); } catch (SQLException ignored) {}
+            }
         }
     }
 

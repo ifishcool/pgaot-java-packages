@@ -32,11 +32,11 @@ public class RowManager {
 
         TableEntity table = store.getTable(tableId);
         checkMode(table, false);
-        checkAccess(userId, table, false, false);
+        checkAccess(userId, table, false, true);
         String physical = TableManager.physicalName(table.getOwnerId(), table.getName());
 
         // 从第一行取列名
-        Set<String> colNames = new LinkedHashSet<>(rows.get(0).keySet());
+        Set<String> colNames = new LinkedHashSet<>(rows.getFirst().keySet());
         for (Map<String, Object> r : rows) colNames.addAll(r.keySet());
         List<String> names = new ArrayList<>(colNames);
 

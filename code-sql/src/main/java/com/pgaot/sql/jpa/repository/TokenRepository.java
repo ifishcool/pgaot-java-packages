@@ -16,13 +16,14 @@ public class TokenRepository {
 
     /** 创建 token */
     public ApiTokenEntity create(String userId, String name, String tokenHash,
-                                  String prefix, String scopes) {
+                                  String prefix, String scopes, java.time.LocalDateTime expiresAt) {
         ApiTokenEntity t = new ApiTokenEntity();
         t.setUserId(userId);
         t.setName(name);
         t.setTokenHash(tokenHash);
         t.setPrefix(prefix);
         t.setScopes(scopes);
+        t.setExpiresAt(expiresAt);
         jpa.save(t);
         return t;
     }
@@ -40,9 +41,20 @@ public class TokenRepository {
                 ApiTokenEntity.class, userId);
     }
 
-    /** 吊销 */
-    public void revoke(Long id) {
+    /** 吊销（含所有权校验） */
+    public boolean revoke(String userId, Long tokenId) {
+        ApiTokenEntity t = jpa.findById(ApiTokenEntity.class, tokenId);
+        if (t == null || !t.getUserId().equals(userId)) return false;
+        jpa.delete(ApiTokenEntity.class, tokenId);
+        return true;
+    }
+
+    /** 更新最后使用时间 */
+    public void touchLastUsed(Long id) {
         ApiTokenEntity t = jpa.findById(ApiTokenEntity.class, id);
-        if (t != null) jpa.delete(ApiTokenEntity.class, id);
+        if (t != null) {
+            t.setLastUsed(java.time.LocalDateTime.now());
+            jpa.update(t);
+        }
     }
 }

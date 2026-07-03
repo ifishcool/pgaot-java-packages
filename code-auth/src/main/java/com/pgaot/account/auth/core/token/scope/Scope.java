@@ -39,7 +39,8 @@ public class Scope {
 
     /** 检查 scopes 列表中是否有任一匹配 required */
     public static boolean matchesAny(List<String> scopes, String required) {
-        if (scopes == null || scopes.contains("*:*:*")) return true;
+        if (scopes == null) return false;
+        if (scopes.contains("*:*:*")) return true;
         return scopes.stream().anyMatch(s -> new Scope(s).matches(required));
     }
 

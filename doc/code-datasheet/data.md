@@ -2,7 +2,7 @@
 
 ## 功能
 
-增删改行、SQL 执行、CSV/JSON 导出。
+增删改行、SQL 执行、Jackson CSV/JSON 导入导出。
 
 ## API
 
@@ -80,25 +80,37 @@ DataApi.exportCsv("tenant_a", "123", ["product","amount"], "amount > 50")
     ▼
 ExportManager.exportCsv(...)
     │
-    ├─ 1. 查表名 → tenant_a_sales
-    ├─ 2. SELECT product, amount FROM tenant_a_sales WHERE amount > 50
-    ├─ 3. 最多导出 50000 行，超限抛异常
-    └─ 4. 拼 CSV 字符串
-         product,amount
-         "A",100
-         "B",200
+    ├─ 1. 权限校验：查表 → 非 owner 查 share(SELECT) → 模式检查(WRITE_ONLY拒绝)
+    ├─ 2. 查表名 → tenant_a_sales
+    ├─ 3. SELECT product, amount FROM tenant_a_sales WHERE amount > 50
+    ├─ 4. 最多导出 100000 行，超限抛异常
+    └─ 5. Jackson CsvMapper 格式化
+```
+
+## 导入流程
+
+```
+DataApi.importCsv("tenant_a", "123", csv)
+    │
+    ▼
+ExportManager.parseCsv(csv)  → Jackson CsvMapper 解析为 List<Map>
+    │
+    ▼
+RowManager.insert(rows)  → 批量插入
 ```
 
 ## 关键源码
 
 | 文件 | 内容 |
 |---|---|
-| `DataApi.java` | 7 个委托方法 |
-| `RowManager.java:25-45` | insert() + 批量 |
-| `RowManager.java:48-52` | delete() |
-| `RowManager.java:55-69` | update() |
-| `RowManager.java:31-50` | insert() 直接从 Map keys 拼 SQL |
+| `DataApi.java` | 7 个委托方法 + importCsv/importJson/updateCell/deleteRow |
+| `RowManager.java:25-45` | insert() + 批量，含共享 INSERT 权限校验 |
+| `RowManager.java:48-52` | delete()，含共享 DELETE 权限校验 |
+| `RowManager.java:55-69` | update()，含共享 UPDATE 权限校验 |
 | `SqlExecutor.java:26-56` | execute() + Druid AST 替换 |
-| `SqlExecutor.java:58-97` | rewrite() + AST 遍历 |
-| `ExportManager.java:23-38` | exportCsv() |
-| `ExportManager.java:41-60` | exportJson() |
+| `SqlExecutor.java:58-97` | rewrite() + AST 遍历 + 权限校验 |
+| `ExportManager.java:32-44` | exportCsv() Jackson 格式化 |
+| `ExportManager.java:46-57` | exportJson() Jackson 格式化 |
+| `ExportManager.java:70-92` | query() 含权限/模式校验 |
+| `ExportManager.java:100-115` | parseCsv() Jackson CsvMapper |
+| `ExportManager.java:118-128` | parseJson() Jackson ObjectMapper |

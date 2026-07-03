@@ -45,7 +45,7 @@ LoginEntry.tokens().list("alice");
 
 ## 存储
 
-- MySQL 表 `api_token`（首次使用自动 CREATE TABLE IF NOT EXISTS）
+- MySQL 表 `api_token`，通过 `code-sql` JPA 自动建表
 - 字段：id, user_id, name, token_hash, prefix, scopes, last_used, expires_at, created_at
 - `token_hash` 唯一索引，用于快速校验
 
@@ -55,11 +55,24 @@ LoginEntry.tokens().list("alice");
 ApiTokenManager.validate(token, requiredScope)
     │
     ├─ TokenGenerator.hash(token) → SHA-256
-    ├─ TokenStore.findByHash(hash) → 查 MySQL
-    ├─ row == null → LoginException.apiTokenInvalid()
+    ├─ TokenRepository.findByHash(hash) → JPA 查 MySQL
+    ├─ null → LoginException.apiTokenInvalid()
+    ├─ expiresAt 不为空且已过期 → LoginException.apiTokenInvalid("token 已过期")
     ├─ Scope.matchesAny(scopes, required) → 通配符匹配
-    ├─ updateLastUsed() → 记录最后使用时间
+    ├─ TokenRepository.touchLastUsed(id) → 更新 last_used
     └─ return userId
+```
+
+## 吊销流程
+
+```
+ApiTokenManager.revoke(ownerId, tokenId)
+    │
+    ├─ TokenRepository.revoke(ownerId, tokenId)
+    │   ├─ 查 ApiTokenEntity
+    │   ├─ userId 不匹配 → return false
+    │   └─ delete + return true
+    └─ false → LoginException.apiTokenInvalid("token 不存在或无权操作")
 ```
 
 ## 关键源码
@@ -68,5 +81,5 @@ ApiTokenManager.validate(token, requiredScope)
 |---|---|
 | `ApiTokenManager.java` | 对外 API |
 | `TokenGenerator.java` | pat_ 生成 + SHA-256 |
-| `TokenStore.java` | MySQL CRUD（code-sql） |
+| `TokenRepository.java` | JPA CRUD（code-sql） |
 | `scope/Scope.java` | 权限范围解析 + 匹配 |

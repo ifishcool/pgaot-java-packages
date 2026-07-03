@@ -42,14 +42,17 @@ public class LoginService {
         Map<String, Object> extra = new HashMap<>();
         extra.put("nickname", userInfo.getNickname());
         extra.put("avatar", userInfo.getAvatar());
+        if (userInfo.getEmail() != null) extra.put("email", userInfo.getEmail());
         if (userInfo.getExtra() != null) extra.putAll(userInfo.getExtra());
 
         TokenPair pair = jwt.generate(userInfo.getUserId(), extra);
         tokenStore.save(userInfo.getUserId(), pair.jti(), pair.expiresIn());
-        userRepo.upsert(userInfo.getUserId(), userInfo.getNickname(), userInfo.getAvatar());
+        userRepo.upsert(userInfo.getUserId(), userInfo.getNickname(), userInfo.getAvatar(),
+                userInfo.getEmail());
 
         return new LoginResult(pair.accessToken(), pair.refreshToken(),
-                userInfo.getUserId(), userInfo.getNickname(), userInfo.getAvatar());
+                userInfo.getUserId(), userInfo.getNickname(), userInfo.getAvatar(),
+                userInfo.getEmail());
     }
 
     /** 校验：解析 JWT → 单设备登录检查 */

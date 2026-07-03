@@ -5,6 +5,7 @@ import com.pgaot.account.auth.api.LoginEntry;
 import com.pgaot.account.auth.api.model.LoginResult;
 import com.pgaot.account.auth.api.model.LoginUser;
 import com.sun.net.httpserver.HttpServer;
+import org.junit.jupiter.api.*;
 
 import java.awt.Desktop;
 import java.io.OutputStream;
@@ -18,7 +19,17 @@ import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-public class LoginTest {
+import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
+
+/**
+ * OAuth 登录集成测试 — 需要人工在浏览器中授权.
+ * 本地运行: 用 IDE 直接跑 main() 方法.
+ * CI 环境: 自动跳过.
+ */
+@Tag("integration")
+@Disabled("需要人工浏览器授权，CI 跳过")
+class LoginTest {
 
     private static final int PORT = 9999;
 
@@ -37,26 +48,12 @@ public class LoginTest {
             String query = exchange.getRequestURI().getQuery();
             String status = param(query, "status");
             String code = param(query, "code");
-            String retState = param(query, "state");
-            String msg = param(query, "message");
-
-            String html;
-            if ("success".equals(status) && code != null && state.equals(retState)) {
+            if ("success".equals(status) && code != null && state.equals(param(query, "state"))) {
                 codeHolder[0] = code;
-                html = "<h1>授权成功，窗口可关闭</h1>";
-            } else if ("denied".equals(status)) {
-                errorHolder[0] = "用户拒绝授权";
-                html = "<h1>授权被拒绝</h1>";
-            } else if ("failed".equals(status)) {
-                errorHolder[0] = msg;
-                html = "<h1>授权失败</h1><p>" + (msg != null ? msg : "") + "</p>";
             } else {
-                errorHolder[0] = msg;
-                html = "<h1>授权失败</h1><p>" + (errorHolder[0] != null ? errorHolder[0] : "") + "</p>";
+                errorHolder[0] = "授权失败";
             }
-
-            byte[] bytes = html.getBytes(StandardCharsets.UTF_8);
-            exchange.getResponseHeaders().set("Content-Type", "text/html; charset=utf-8");
+            byte[] bytes = "<h1>完成，窗口可关闭</h1>".getBytes(StandardCharsets.UTF_8);
             exchange.sendResponseHeaders(200, bytes.length);
             try (OutputStream os = exchange.getResponseBody()) { os.write(bytes); }
             latch.countDown();
@@ -73,7 +70,6 @@ public class LoginTest {
         try { Desktop.getDesktop().browse(new URI(authUrl)); } catch (Exception ignored) {}
         System.out.println("等待授权...");
 
-        
         boolean ok = latch.await(5, TimeUnit.MINUTES);
         server.stop(0);
 
@@ -86,24 +82,20 @@ public class LoginTest {
         LoginResult result = LoginEntry.login(LoginType.YUNTOWER, Map.of("code", code));
 
         if (result.isSuccess()) {
-            System.out.println("登录成功");
-            System.out.println("  userId:   " + result.getUserId());
-            System.out.println("  nickname: " + result.getNickname());
-            System.out.println("  avatar:   " + result.getAvatar());
-            System.out.println("  JWT:      " + result.getAccessToken());
-
+            System.out.println("登录成功: " + result.getUserId() + " " + result.getNickname());
             LoginUser user = LoginEntry.validate(result.getAccessToken());
             System.out.println("校验通过: " + user.getUserId());
-
-            System.out.println("\n现在去查 Redis: redis-cli -a vifanlyrs -n 1 get 'login:token:" + user.getUserId() + "'");
-            System.out.println("按回车退出...");
-            try { System.in.read(); } catch (Exception ignored) {}
-
             LoginEntry.logout(result.getAccessToken());
             System.out.println("退出成功");
         } else {
-            System.out.println("登录失败: [" + result.getCode() + "] " + result.getMessage());
+            System.err.println("登录失败: [" + result.getCode() + "] " + result.getMessage());
         }
+    }
+
+    @Test
+    void placeholderForJUnitDiscovery() {
+        // 此测试通过 main() 方法手动运行
+        assertTrue(true);
     }
 
     private static String param(String query, String key) {

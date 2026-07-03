@@ -30,6 +30,7 @@ class YuntowerStrategy implements LoginStrategy {
         UserProfileResponse profile = yuntower.user().getUserInfo(token.getAccessToken());
 
         String localUserId = uidBinder.apply(profile.getUid());
-        return new UserInfo(localUserId, profile.getNickname(), profile.getAvatar());
+        return new UserInfo(localUserId, profile.getNickname(), profile.getAvatar(),
+                profile.getEmail());
     }
 }

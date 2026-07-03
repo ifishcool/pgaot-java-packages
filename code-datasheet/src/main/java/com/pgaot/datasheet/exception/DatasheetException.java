@@ -55,6 +55,11 @@ public class DatasheetException extends RuntimeException {
         return new DatasheetException(ErrorCode.SQL_OPERATION_DENIED, op);
     }
 
+    /** 无导出权限 */
+    public static DatasheetException exportPermissionDenied() {
+        return new DatasheetException(ErrorCode.EXPORT_PERMISSION_DENIED);
+    }
+
     /** 错误码 */
     public int getCode() { return code; }
 }

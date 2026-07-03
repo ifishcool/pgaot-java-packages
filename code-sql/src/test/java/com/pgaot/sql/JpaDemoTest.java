@@ -2,37 +2,59 @@ package com.pgaot.sql;
 
 import com.pgaot.sql.api.JpaTemplate;
 import com.pgaot.sql.jpa.entity.UserEntity;
+import org.junit.jupiter.api.*;
 
-public class JpaDemoTest {
+import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-    public static void main(String[] args) {
-        JpaTemplate jpa = JpaTemplate.fromEnv(UserEntity.class);
+@Tag("integration")
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+class JpaDemoTest {
 
-        // 模拟 code-auth 登录成功后的数据落库
+    private static JpaTemplate jpa;
+    private static final String TEST_USER = "user_junit_demo";
+
+    @BeforeAll
+    static void requireDb() {
+        assumeTrue(EnvLoader.hasDb(), "跳过：需要数据库");
+        jpa = JpaTemplate.fromEnv(UserEntity.class);
+    }
+
+    @AfterAll
+    static void cleanup() {
+        if (jpa != null) {
+            try { jpa.delete(UserEntity.class, TEST_USER); } catch (Exception ignored) {}
+            jpa.close();
+        }
+    }
+
+    @Test @Order(1)
+    void shouldSaveAndFindById() {
         UserEntity u = new UserEntity();
-        u.setUserId("user_10001");
+        u.setUserId(TEST_USER);
         u.setNickname("测试用户");
         u.setAvatar("https://cdn.example.com/avatar/10001.png");
         jpa.save(u);
-        System.out.println("新增: id=" + u.getUserId() + ", userId=" + u.getUserId());
 
-        // 查询
-        jpa.findAll(UserEntity.class).stream().limit(5)
-                .forEach(row -> System.out.println(
-                        "  id=" + row.getUserId()
-                        + ", userId=" + row.getUserId()
-                        + ", nickname=" + row.getNickname()));
+        UserEntity found = jpa.findById(UserEntity.class, TEST_USER);
+        assertNotNull(found);
+        assertEquals("测试用户", found.getNickname());
+    }
 
-        // 更新昵称
+    @Test @Order(2)
+    void shouldUpdateNickname() {
+        UserEntity u = jpa.findById(UserEntity.class, TEST_USER);
+        assertNotNull(u);
         u.setNickname("新昵称");
-        u.setUpdatedAt(java.time.LocalDateTime.now());
         jpa.update(u);
-        System.out.println("已更新: " + jpa.findById(UserEntity.class, u.getUserId()).getNickname());
 
-        // 删除
-        jpa.delete(UserEntity.class, u.getUserId());
-        System.out.println("已删除");
+        UserEntity updated = jpa.findById(UserEntity.class, TEST_USER);
+        assertEquals("新昵称", updated.getNickname());
+    }
 
-        jpa.close();
+    @Test
+    void shouldFindAll() {
+        var list = jpa.findAll(UserEntity.class);
+        assertNotNull(list);
     }
 }

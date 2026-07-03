@@ -10,4 +10,5 @@ public final class Messages {
     public static final String MODE_WRITE_ONLY = "表 %s 为只写模式，禁止查询";
     public static final String MODE_DELETE_BLOCKED = "表 %s 为只写模式，禁止 DELETE";
     public static final String TABLE_NO_ACCESS = "（无权访问）";
+    public static final String EXPORT_DENIED     = "无权导出该表数据";
 }

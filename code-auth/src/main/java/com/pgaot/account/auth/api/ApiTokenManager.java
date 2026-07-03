@@ -42,7 +42,12 @@ public class ApiTokenManager {
         String token = TokenGenerator.generate();
         String hash = TokenGenerator.hash(token);
         String scopesJson = "[" + String.join(",", scopes.stream().map(s -> "\"" + s + "\"").toList()) + "]";
-        ApiTokenEntity entity = repo.create(userId, name, hash, TokenGenerator.prefix(token), scopesJson);
+        java.time.LocalDateTime expires = expiresAtSec != null
+                ? java.time.LocalDateTime.ofEpochSecond(expiresAtSec, 0,
+                        java.time.ZoneOffset.ofHours(8))
+                : null;
+        ApiTokenEntity entity = repo.create(userId, name, hash,
+                TokenGenerator.prefix(token), scopesJson, expires);
         TokenInfo info = toInfo(entity);
         info.setToken(token);
         return info;
@@ -54,11 +59,17 @@ public class ApiTokenManager {
         ApiTokenEntity entity = repo.findByHash(hash);
         if (entity == null) throw LoginException.apiTokenInvalid("token 无效");
 
+        if (entity.getExpiresAt() != null
+                && entity.getExpiresAt().isBefore(java.time.LocalDateTime.now()))
+            throw LoginException.apiTokenInvalid("token 已过期");
+
         if (requiredScope != null) {
             List<String> scopes = parseScopes(entity.getScopes());
             if (!Scope.matchesAny(scopes, requiredScope))
                 throw LoginException.apiTokenScopeDenied(requiredScope);
         }
+
+        repo.touchLastUsed(entity.getId());
         return entity.getUserId();
     }
 
@@ -68,8 +79,11 @@ public class ApiTokenManager {
                 .map(String::trim).filter(s -> !s.isEmpty()).toList();
     }
 
-    /** 吊销 token */
-    public void revoke(String ownerId, long tokenId) { repo.revoke(tokenId); }
+    /** 吊销 token（含所有权校验） */
+    public void revoke(String ownerId, long tokenId) {
+        if (!repo.revoke(ownerId, tokenId))
+            throw LoginException.apiTokenInvalid("token 不存在或无权操作");
+    }
 
     /** 列出用户的所有 token */
     public List<TokenInfo> list(String userId) {
@@ -84,6 +98,8 @@ public class ApiTokenManager {
         t.setPrefix(e.getPrefix());
         t.setScopes(e.getScopes());
         if (e.getCreatedAt() != null) t.setCreatedAt(e.getCreatedAt().toString());
+        if (e.getLastUsed() != null) t.setLastUsed(e.getLastUsed().toString());
+        if (e.getExpiresAt() != null) t.setExpiresAt(e.getExpiresAt().toString());
         return t;
     }
 }

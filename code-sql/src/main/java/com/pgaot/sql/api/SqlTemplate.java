@@ -1,7 +1,6 @@
 package com.pgaot.sql.api;
 
 import com.alibaba.druid.pool.DruidDataSource;
-import com.alibaba.druid.wall.WallFilter;
 import com.pgaot.sql.common.constants.Messages;
 import com.pgaot.sql.core.executor.RawExecutor;
 import com.pgaot.sql.core.executor.TemplateExecutor;
@@ -10,52 +9,40 @@ import com.pgaot.sql.support.PageQuery;
 import com.pgaot.sql.support.PageResponse;
 
 import javax.sql.DataSource;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 /**
- * 通用 SQL 执行器
+ * 通用 SQL 执行器.
+ *
+ * <p>不修改传入的 DataSource — WallFilter 应在创建 DataSource 时通过
+ * {@link com.pgaot.sql.common.config.EnvConfig#createDataSource(String,
+ * com.alibaba.druid.wall.WallConfig, int)} 附加。
  *
  * <pre>{@code
  * SqlTemplate db = new SqlTemplate(SqlTemplateConfig.fromEnv());
- *
- * // 查询 → List<Map>
  * List<Map<String, Object>> rows = db.sql("SELECT * FROM t_user WHERE id = ?", 1);
- *
- * // 增删改 → 影响行数 int
- * int n = db.sql("UPDATE t_user SET name = ? WHERE id = ?", "张三", 1);
- *
- * // 绕过安全
- * db.unsafe("TRUNCATE t_log");
- *
- * // 批量
- * db.batch("INSERT INTO t_log (msg) VALUES (?)", batch);
  * }</pre>
  */
-public class SqlTemplate {
+public class SqlTemplate implements AutoCloseable {
 
+    private final DruidDataSource dataSource;
     private final TemplateExecutor template;
     private final RawExecutor raw;
 
-    /** 默认配置（WallFilter 全开放） */
     public SqlTemplate(DataSource dataSource) {
-        this(new SqlTemplateConfig(dataSource));
+        this.dataSource = toDruid(dataSource);
+        this.template = new TemplateExecutor(this.dataSource);
+        this.raw = new RawExecutor(this.dataSource);
     }
 
-    /** 自定义安全配置 */
     public SqlTemplate(SqlTemplateConfig config) {
-        DruidDataSource druid = toDruid(config.getDataSource());
-        WallFilter wall = new WallFilter();
-        wall.setConfig(config.getWallConfig());
-
-        List<com.alibaba.druid.filter.Filter> filters = new ArrayList<>(druid.getProxyFilters());
-        filters.add(wall);
-        druid.setProxyFilters(filters);
-
-        this.template = new TemplateExecutor(druid);
-        this.raw = new RawExecutor(druid);
+        this(config.getDataSource());
     }
+
+    /** 关闭连接池 */
+    @Override
+    public void close() { dataSource.close(); }
 
     /**
      * SQL 执行

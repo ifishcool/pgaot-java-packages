@@ -15,10 +15,13 @@ import com.pgaot.account.auth.common.constants.AuthConstants;
  */
 public interface TokenStore {
 
-    /** Key 前缀，默认 "login:token"，可通过 CODE_AUTH_KEY_PREFIX 环境变量覆盖 */
-    String KEY_PREFIX = System.getenv(AuthConstants.Env.KEY_PREFIX) != null
-            ? System.getenv(AuthConstants.Env.KEY_PREFIX)
-            : "login:token";
+    /** Key 前缀，默认 "login:token"，可通过 CODE_AUTH_KEY_PREFIX 环境变量/属性覆盖 */
+    static String envOr(String key, String def) {
+        String v = System.getenv(key);
+        if (v == null || v.isBlank()) v = System.getProperty(key);
+        return v != null && !v.isBlank() ? v : def;
+    }
+    String KEY_PREFIX = envOr(AuthConstants.Env.KEY_PREFIX, "login:token");
 
     /** 拼接 Redis Key */
     static String key(String userId) { return KEY_PREFIX + ":" + userId; }

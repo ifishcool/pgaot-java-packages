@@ -1,5 +1,6 @@
 package com.pgaot.datasheet.metadata;
 
+import com.pgaot.datasheet.exception.DatasheetException;
 import com.pgaot.datasheet.metadata.entity.ShareEntity;
 import com.pgaot.datasheet.metadata.entity.TableEntity;
 import com.pgaot.sql.api.JpaTemplate;
@@ -108,7 +109,9 @@ public class MetadataStore {
                     + "IS_NULLABLE AS nullable FROM INFORMATION_SCHEMA.COLUMNS "
                     + "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? "
                     + "AND COLUMN_NAME != 'id' ORDER BY ORDINAL_POSITION", physicalTable);
-        } catch (Exception e) { return List.of(); }
+        } catch (Exception e) {
+            throw DatasheetException.sqlOperationDenied("metadata query: " + e.getMessage());
+        }
     }
 
     private TableEntity toTableEntity(DsTableEntity e) {

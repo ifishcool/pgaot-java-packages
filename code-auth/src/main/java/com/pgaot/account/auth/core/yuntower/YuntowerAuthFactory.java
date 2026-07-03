@@ -49,8 +49,9 @@ public final class YuntowerAuthFactory {
         StrategyRegistry registry = new StrategyRegistry()
                 .register(LoginType.YUNTOWER, new YuntowerStrategy(yuntower, uidBinder));
         long ttl = ttlEnv(AuthConstants.Env.TOKEN_TTL, 604800);
+        boolean autoDdl = com.pgaot.sql.common.config.EnvConfig.autoDdl("");
         UserRepository userRepo = new UserRepository(
-                JpaTemplate.fromEnv("", true, UserEntity.class));
+                JpaTemplate.fromEnv("", autoDdl, UserEntity.class));
         return new LoginService(registry, new LoginConfig(jwtSecret, ttl, ttl * 2),
                 new RedisTokenStore(redisUri), userRepo);
     }
@@ -65,6 +66,7 @@ public final class YuntowerAuthFactory {
 
     private static String env(String key) {
         String v = System.getenv(key);
+        if (v == null || v.isBlank()) v = System.getProperty(key);
         if (v == null || v.isBlank()) throw LoginException.configMissing(key);
         return v;
     }

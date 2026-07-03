@@ -26,6 +26,7 @@ public enum ErrorCode implements IResultCode {
     // ===== 数据操作 (30_003_xxx) =====
     ROW_VALIDATION_FAILED(30_003_001, "数据校验失败"),
     ROW_COUNT_EXCEEDED(30_003_002, "单次操作行数超限"),
+    EXPORT_PERMISSION_DENIED(30_003_003, "无导出权限"),
 
     // ===== SQL 执行 (30_004_xxx) =====
     SQL_TABLE_NOT_REGISTERED(30_004_001, "SQL 中引用的表未注册"),

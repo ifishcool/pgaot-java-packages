@@ -5,11 +5,20 @@ on:
     tags: ['code-sql/v*', 'code-auth/v*', 'code-datasheet/v*']
 
 jobs:
-  build:
+  publish:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
+    env:
+      CI: true
+      YUNTOWER_APP_ID: ${{ secrets.YUNTOWER_APP_ID }}
+      YUNTOWER_APP_SECRET: ${{ secrets.YUNTOWER_APP_SECRET }}
+      CODE_AUTH_JWT_SECRET: ${{ secrets.CODE_AUTH_JWT_SECRET }}
+      CODE_AUTH_REDIS_URI: ${{ secrets.CODE_AUTH_REDIS_URI }}
+      CODE_SQL_URL: ${{ secrets.CODE_SQL_URL }}
+      CODE_SQL_USER: ${{ secrets.CODE_SQL_USER }}
+      CODE_SQL_PASS: ${{ secrets.CODE_SQL_PASS }}
 
     steps:
     - uses: actions/checkout@v4
@@ -19,7 +28,7 @@ jobs:
         TAG=${GITHUB_REF#refs/tags/}
         MODULE=${TAG%%/*}
         echo "MODULE=$MODULE" >> $GITHUB_ENV
-        echo "Building $MODULE"
+        echo "Publishing $MODULE"
 
     - name: Set up JDK 21
       uses: actions/setup-java@v4
@@ -29,10 +38,36 @@ jobs:
         server-id: github
         settings-path: ${{ github.workspace }}
 
-    - name: Build with Maven
-      run: mvn -B package -f $MODULE/pom.xml -s $GITHUB_WORKSPACE/settings.xml
+    # ── Install code-sql if downstream module ──
+
+    - name: Install code-sql (dependency)
+      if: env.MODULE == 'code-auth' || env.MODULE == 'code-datasheet'
+      run: mvn -B install -DskipTests -f code-sql/pom.xml
       env:
         GITHUB_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
+
+    # ── Build & Test ──
+
+    - name: Compile
+      run: mvn -B compile -f $MODULE/pom.xml -s $GITHUB_WORKSPACE/settings.xml
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
+
+    - name: Unit tests
+      run: mvn -B test -f $MODULE/pom.xml -s $GITHUB_WORKSPACE/settings.xml
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
+
+    - name: ErrorCode dedup
+      run: |
+        case "$MODULE" in
+          code-sql)       PKG=sql ;;
+          code-auth)      PKG=account.auth ;;
+          code-datasheet) PKG=datasheet ;;
+        esac
+        java -cp $MODULE/target/classes com.pgaot.${PKG}.common.code.ErrorCode
+
+    # ── Publish ──
 
     - name: Publish to GitHub Packages
       run: mvn deploy -f $MODULE/pom.xml -s $GITHUB_WORKSPACE/settings.xml
