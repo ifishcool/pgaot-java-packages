@@ -1,4 +1,4 @@
-package com.pgaot.log.annotation;
+package com.pgaot.web.annotation;
 
 import java.lang.annotation.*;
 

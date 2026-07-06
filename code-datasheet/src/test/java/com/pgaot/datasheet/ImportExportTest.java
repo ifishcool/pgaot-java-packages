@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 @Tag("integration")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@SuppressWarnings("resource")
 class ImportExportTest {
 
     private static DatasheetEngine engine;
@@ -71,5 +72,6 @@ class ImportExportTest {
     static void cleanup() {
         if (engine != null && tableId != null)
             try { engine.tables().drop(USER, tableId); } catch (Exception ignored) {}
+        if (engine != null) engine.close();
     }
 }

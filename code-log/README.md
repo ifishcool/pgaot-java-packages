@@ -136,18 +136,7 @@ String result = ContextRunner.call("alice", "Alice", "t1", () -> fetchData());
 
 异常时也会清理上下文，不会泄漏。
 
-### AuditableProxy — 注解驱动审计
-
-```java
-// 1. 在方法上加 @Auditable
-@Auditable(action = "DELETE", tableName = "scores")
-public void deleteScore(Long id) { ... }
-
-// 2. 调用时用 AuditableProxy 拦截
-AuditableProxy.invoke(this, "deleteScore", () -> {
-    doDelete(123L); return null;
-}, beforeJson, afterJson);
-```
+> `@Auditable` 注解已移至 [code-web](../code-web/)。
 
 ---
 
@@ -197,10 +186,7 @@ code-log/src/main/java/com/pgaot/log/
 ├── core/
 │   ├── StructuredLogger.java    # SLF4J + MDC 封装
 │   ├── AuditWriter.java         # 委托 code-sql JPA 持久化
-│   ├── ContextRunner.java       # 上下文生命周期包装器
-│   └── AuditableProxy.java      # @Auditable 注解拦截器
-├── annotation/
-│   └── Auditable.java           # 方法级审计注解
+│   └── ContextRunner.java       # 上下文生命周期包装器
 ├── common/
 │   ├── code/ErrorCode.java      # 40_xxx_xxx
 │   ├── code/IResultCode.java

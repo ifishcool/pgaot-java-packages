@@ -31,6 +31,7 @@ class FilterDemoTest {
         if (safe != null) {
             try { safe.unsafe("DELETE FROM t_user WHERE name LIKE 'test%' OR name IN ('A','B','C','xx')"); }
             catch (Exception ignored) {}
+            safe.close();
         }
     }
 

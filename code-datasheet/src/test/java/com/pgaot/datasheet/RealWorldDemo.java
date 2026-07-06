@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 @Tag("integration")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@SuppressWarnings("resource")
 class RealWorldDemo {
 
     private static DatasheetEngine engine;
@@ -24,7 +25,7 @@ class RealWorldDemo {
     static void setup() {
         assumeTrue(EnvLoader.hasDb(), "跳过：需要数据库");
         engine = DatasheetEngine.fromEnv();
-        for (String u : List.of(ALICE, BOB, CHARLIE))
+            for (String u : List.of(ALICE, BOB, CHARLIE))
             for (TableInfo old : engine.tables().list(u))
                 try { engine.tables().drop(u, old.getId()); } catch (Exception ignored) {}
     }
@@ -96,5 +97,6 @@ class RealWorldDemo {
             for (String u : List.of(ALICE, BOB, CHARLIE))
                 for (TableInfo old : engine.tables().list(u))
                     try { engine.tables().drop(u, old.getId()); } catch (Exception ignored) {}
+        if (engine != null) engine.close();
     }
 }

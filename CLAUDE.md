@@ -13,6 +13,7 @@ PGAOT_JAVA_PACKAGE/
 ├── code-sql/         # SQL engine (Druid firewall + JPA + multi-datasource)
 ├── code-datasheet/   # Multi-tenant datasheet (prefix isolation + sharing + Jackson)
 ├── code-log/         # Structured logging + audit log + trace context
+├── code-web/         # REST API layer (Spring Boot + Swagger)
 ├── doc/              # Developer documentation
 ├── install-local.sh  # Install jars to ~/.m2 for local development
 └── .github/workflows/
@@ -103,10 +104,11 @@ git tag code-sql/v1.0.1       # test + publish code-sql only
 git tag code-auth/v1.0.2      # install code-sql → test + publish code-auth
 git tag code-datasheet/v1.0.3 # install code-sql → test + publish code-datasheet
 git tag code-log/v1.0.0       # test + publish code-log
+git tag code-web/v1.0.0       # test + publish code-web
 git push --tags
 ```
 
-Pipeline per module: `compile → unit+integration tests (165 total) → ErrorCode dedup → deploy`
+Pipeline per module: `compile → unit+integration tests (186 total) → ErrorCode dedup → deploy`
 
 Requires 8 GitHub Secrets: `GH_PACKAGES_TOKEN`, `YUNTOWER_APP_ID`, `YUNTOWER_APP_SECRET`, `CODE_AUTH_JWT_SECRET`, `CODE_AUTH_REDIS_URI`, `CODE_SQL_URL`, `CODE_SQL_USER`, `CODE_SQL_PASS`.
 
@@ -150,7 +152,17 @@ Requires 8 GitHub Secrets: `GH_PACKAGES_TOKEN`, `YUNTOWER_APP_ID`, `YUNTOWER_APP
 - **Audit logging**: `AuditLogger.record(AuditEvent)` → `AuditWriter.write()` → `AuditLogRepository` (code-sql JPA) → `audit_log` 表。记录 who/when/what/before/after。
 - **Annotation**: `@Auditable(action, tableName)` 方法级注解，标记需要审计的操作。
 - **Audit table**: `audit_log` (code-sql) — userId/userName/tenantId/action/tableName/rowId/beforeData/afterData/remark/traceId/createdAt。索引: user_id, action, created_at。
-- **Dependency**: `code-sql` 1.0.0, SLF4J 2.0.17. No Spring, no HTTP layer.
+- **Dependency**: `code-sql` 1.0.0, SLF4J 2.0.17.
+
+## code-web Key Architecture
+
+- **BaseController**: Controllers extend it for `getUserId()` / `getNickname()` / `getClientIp()`. No more `@RequestAttribute`.
+- **Auth**: AspectJ AOP — `@RequiredAuth` / `@RequiredScope` annotate methods, `AuthAspect` auto-validates JWT/API Token via `@Before` pointcut.
+- **API response**: `ApiResponse<T>` — `{"code":0, "data":{}, "traceId":"xxx"}`. `ok(data)` / `fail(code, msg)`. traceId auto-filled from LogContext.
+- **Model naming**: `param/` for request DTOs, `vo/` for response VOs, organized by business domain.
+- **Swagger**: Knife4j (springdoc-openapi) at `/doc.html`.
+- **Controllers**: `auth/AuthController`, `datasheet/TableController`, `datasheet/DataController`, `audit/AuditController`.
+- **Dependency**: code-auth + code-datasheet + code-log, Spring Boot 3.4, SpringDoc 2.7.
 
 ## Documentation
 
@@ -162,3 +174,4 @@ Requires 8 GitHub Secrets: `GH_PACKAGES_TOKEN`, `YUNTOWER_APP_ID`, `YUNTOWER_APP
 - **code-sql**: druid 1.2.28, spring-jdbc 7.0.8, hibernate-core 6.6.4, mysql-connector-j 9.7.0, lombok 1.18.46 (provided), JUnit 5.11.4 (test)
 - **code-datasheet**: code-sql 1.0.0, jackson-databind 2.22.0, jackson-dataformat-csv 2.22.0, lombok 1.18.46 (provided)
 - **code-log**: code-sql 1.0.0, slf4j-api 2.0.17, lombok 1.18.46 (provided), JUnit 5.11.4 (test)
+- **code-web**: code-auth + code-datasheet + code-log 1.0.0, Spring Boot 3.4, Knife4j 4.5

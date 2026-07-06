@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 @Tag("integration")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@SuppressWarnings("resource")
 class ShareTest {
 
     private static DatasheetEngine engine;
@@ -119,4 +120,6 @@ class ShareTest {
         engine.tables().drop(OWNER, tableId);
         assertNull(engine.tables().get(tableId));
     }
+
+    @AfterAll static void close() { if (engine != null) engine.close(); }
 }

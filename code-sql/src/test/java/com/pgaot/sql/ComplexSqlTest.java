@@ -57,4 +57,6 @@ class ComplexSqlTest {
         int n = db.sql("UPDATE t_user SET age = age + 1 WHERE id = 1");
         assertTrue(n >= 0);
     }
+
+    @AfterAll static void cleanup() { if (db != null) db.close(); }
 }

@@ -2,7 +2,7 @@ name: CI / Publish
 
 on:
   push:
-    tags: ['code-sql/v*', 'code-auth/v*', 'code-datasheet/v*', 'code-log/v*']
+    tags: ['code-sql/v*', 'code-auth/v*', 'code-datasheet/v*', 'code-log/v*', 'code-web/v*']
 
 jobs:
   build:
@@ -42,7 +42,7 @@ jobs:
 
     # ═══ install dependency ═══
     - name: Install code-sql (dependency)
-      if: env.MODULE == 'code-auth' || env.MODULE == 'code-datasheet' || env.MODULE == 'code-log'
+      if: env.MODULE == 'code-auth' || env.MODULE == 'code-datasheet' || env.MODULE == 'code-log' || env.MODULE == 'code-web'
       run: mvn -B install -DskipTests -f code-sql/pom.xml
       env:
         GITHUB_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
@@ -65,6 +65,7 @@ jobs:
           code-auth)      PKG=account.auth ;;
           code-datasheet) PKG=datasheet ;;
           code-log)       PKG=log ;;
+          code-web)       PKG=web ;;
         esac
         java -cp $MODULE/target/classes com.pgaot.${PKG}.common.code.ErrorCode
 

@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 @Tag("integration")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@SuppressWarnings("resource")
 class CmsDemo {
 
     private static DatasheetEngine engine;
@@ -24,7 +25,7 @@ class CmsDemo {
     static void setup() {
         assumeTrue(EnvLoader.hasDb(), "跳过：需要数据库");
         engine = DatasheetEngine.fromEnv();
-        for (String u : List.of(ADMIN, EDITOR, REVIEWER))
+            for (String u : List.of(ADMIN, EDITOR, REVIEWER))
             for (TableInfo old : engine.tables().list(u))
                 try { engine.tables().drop(u, old.getId()); } catch (Exception ignored) {}
     }
@@ -87,5 +88,6 @@ class CmsDemo {
             for (String u : List.of(ADMIN, EDITOR, REVIEWER))
                 for (TableInfo old : engine.tables().list(u))
                     try { engine.tables().drop(u, old.getId()); } catch (Exception ignored) {}
+        if (engine != null) engine.close();
     }
 }

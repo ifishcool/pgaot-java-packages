@@ -14,7 +14,8 @@ PGAOT 平台 Java 二方包 Monorepo — 父 POM 统一版本管理。
 | [code-auth](code-auth/)           | 认证框架 — JWT + 单设备登录 + API Token + Redis                  | 25 pass |
 | [code-sql](code-sql/)             | SQL 引擎 — Druid 防火墙 + JPA + 多数据源 + 事务                  | 73 pass |
 | [code-datasheet](code-datasheet/) | 多租户数据表 — 前缀隔离 + AST 权限校验 + Jackson 导入导出 + 共享 | 62 pass |
-| [code-log](code-log/) | 日志框架 — 结构化日志 + 审计日志 + traceId 链路上下文 | 5 pass |
+| [code-log](code-log/) | 日志框架 — 结构化日志 + 审计日志 + traceId 链路上下文 | 8 pass |
+| [code-web](code-web/) | REST API — 统一响应体 + Knife4j 文档 + 注解驱动认证 | 17 pass |
 
 ## 安装
 

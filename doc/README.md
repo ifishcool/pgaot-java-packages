@@ -47,6 +47,12 @@
 |---|---|
 | [code-log/OVERVIEW.md](code-log/OVERVIEW.md) | 架构总览、目录结构、核心类速查 |
 
+## code-web — REST API 层
+
+| 文档 | 内容 |
+|---|---|
+| [code-web/OVERVIEW.md](code-web/OVERVIEW.md) | 架构总览、目录结构、核心类速查 |
+
 
 ## 工程实践
 

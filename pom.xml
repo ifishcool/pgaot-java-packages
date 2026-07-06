@@ -17,6 +17,7 @@
         <module>code-auth</module>
         <module>code-datasheet</module>
         <module>code-log</module>
+        <module>code-web</module>
     </modules>
 
     <properties>
@@ -24,6 +25,7 @@
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+
 
     <repositories>
         <repository>
@@ -44,6 +46,21 @@
                 <artifactId>code-sql</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.pgaot</groupId>
+                <artifactId>code-auth</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.pgaot</groupId>
+                <artifactId>code-datasheet</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.pgaot</groupId>
+                <artifactId>code-log</artifactId>
+                <version>${project.version}</version>
+            </dependency>
 
             <!-- Lombok -->
             <dependency>
@@ -62,7 +79,7 @@
             <dependency>
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-jdbc</artifactId>
-                <version>7.0.8</version>
+                <version>6.2.1</version>
             </dependency>
             <dependency>
                 <groupId>org.hibernate.orm</groupId>
@@ -123,6 +140,18 @@
                 <version>2.0.17</version>
             </dependency>
 
+            <!-- Web -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-web</artifactId>
+                <version>3.4.1</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <version>2.7.0</version>
+            </dependency>
+
             <!-- Test -->
             <dependency>
                 <groupId>org.junit.jupiter</groupId>
@@ -141,6 +170,7 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.13.0</version>
                     <configuration>
+                        <parameters>true</parameters>
                         <annotationProcessorPaths>
                             <path>
                                 <groupId>org.projectlombok</groupId>

@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 @Tag("integration")
+@SuppressWarnings("resource")
 class SqlSecurityTest {
 
     private static DatasheetEngine engine;
@@ -24,7 +25,7 @@ class SqlSecurityTest {
     static void setup() {
         assumeTrue(EnvLoader.hasDb(), "跳过：需要数据库");
         engine = DatasheetEngine.fromEnv();
-        for (String u : List.of(A, B))
+            for (String u : List.of(A, B))
             for (TableInfo old : engine.tables().list(u))
                 try { engine.tables().drop(u, old.getId()); } catch (Exception ignored) {}
 
@@ -105,5 +106,6 @@ class SqlSecurityTest {
             for (String u : List.of(A, B))
                 for (TableInfo old : engine.tables().list(u))
                     try { engine.tables().drop(u, old.getId()); } catch (Exception ignored) {}
+        if (engine != null) engine.close();
     }
 }

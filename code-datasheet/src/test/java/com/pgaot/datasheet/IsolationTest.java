@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 @Tag("integration")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@SuppressWarnings("resource")
 class IsolationTest {
 
     private static DatasheetEngine engine;
@@ -23,7 +24,7 @@ class IsolationTest {
     static void requireDb() {
         assumeTrue(EnvLoader.hasDb(), "跳过：需要数据库");
         engine = DatasheetEngine.fromEnv();
-        for (String u : List.of(USER_A, USER_B))
+            for (String u : List.of(USER_A, USER_B))
             for (TableInfo old : engine.tables().list(u))
                 try { engine.tables().drop(u, old.getId()); } catch (Exception ignored) {}
     }
@@ -121,5 +122,6 @@ class IsolationTest {
             for (String u : List.of(USER_A, USER_B))
                 for (TableInfo old : engine.tables().list(u))
                     try { engine.tables().drop(u, old.getId()); } catch (Exception ignored) {}
+        if (engine != null) engine.close();
     }
 }

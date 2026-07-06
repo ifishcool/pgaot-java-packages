@@ -1,6 +1,6 @@
-package com.pgaot.log.core;
+package com.pgaot.web.proxy;
 
-import com.pgaot.log.annotation.Auditable;
+import com.pgaot.web.annotation.Auditable;
 import com.pgaot.log.api.AuditLogger;
 import com.pgaot.log.api.LogContext;
 import com.pgaot.log.common.model.AuditEvent;

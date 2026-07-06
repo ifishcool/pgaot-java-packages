@@ -1,0 +1,18 @@
+services:
+  code-web:
+    build: .
+    image: pgaot/code-web:latest
+    ports:
+      - "8080:8080"
+    environment:
+      # ---- 数据库 ----
+      CODE_SQL_URL: jdbc:mysql://host.docker.internal:3306/javatest
+      CODE_SQL_USER: javatest
+      CODE_SQL_PASS: your_password
+      CODE_SQL_AUTO_DDL: "true"
+      # ---- 认证 ----
+      YUNTOWER_APP_ID: your_app_id
+      YUNTOWER_APP_SECRET: your_app_secret
+      CODE_AUTH_JWT_SECRET: your_jwt_secret_min_32_chars
+      CODE_AUTH_REDIS_URI: redis://host.docker.internal:6379/1
+    restart: unless-stopped
