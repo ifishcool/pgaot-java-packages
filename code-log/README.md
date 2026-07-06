@@ -124,6 +124,31 @@ LogContext.clear();
 | `afterData` | 变更后数据（JSON） |
 | `remark` | 补充说明 |
 
+### ContextRunner — 上下文生命周期
+
+```java
+// 包裹任意操作，自动 init/clear
+ContextRunner.run("alice", "Alice", "t1", () -> doWork());
+
+// 有返回值
+String result = ContextRunner.call("alice", "Alice", "t1", () -> fetchData());
+```
+
+异常时也会清理上下文，不会泄漏。
+
+### AuditableProxy — 注解驱动审计
+
+```java
+// 1. 在方法上加 @Auditable
+@Auditable(action = "DELETE", tableName = "scores")
+public void deleteScore(Long id) { ... }
+
+// 2. 调用时用 AuditableProxy 拦截
+AuditableProxy.invoke(this, "deleteScore", () -> {
+    doDelete(123L); return null;
+}, beforeJson, afterJson);
+```
+
 ---
 
 ## 数据库查询
@@ -171,7 +196,9 @@ code-log/src/main/java/com/pgaot/log/
 │   └── AuditLogger.java         # 审计日志入口
 ├── core/
 │   ├── StructuredLogger.java    # SLF4J + MDC 封装
-│   └── AuditWriter.java         # 委托 code-sql JPA 持久化
+│   ├── AuditWriter.java         # 委托 code-sql JPA 持久化
+│   ├── ContextRunner.java       # 上下文生命周期包装器
+│   └── AuditableProxy.java      # @Auditable 注解拦截器
 ├── annotation/
 │   └── Auditable.java           # 方法级审计注解
 ├── common/
