@@ -68,3 +68,10 @@ mvn compile && java -cp target/classes com.pgaot.<module>.common.code.ErrorCode
 | `SqlSecurityTest` | 16+16 | SQL 安全（正常放行 + 攻击拦截） |
 | `CmsDemo` | 7 | CMS 场景（admin/editor/reviewer） |
 | `RealWorldDemo` | 8 | 销售团队场景（alice/bob/charlie） |
+
+### code-log — 5 tests
+
+| 测试类 | 用例 | 说明 |
+|---|---|---|
+| `LogContextTest` | 4 | init/clear/initTrace/默认未初始化 |
+| `AuditWriterTest` | 1 | 审计日志写入 + 验证持久化 |

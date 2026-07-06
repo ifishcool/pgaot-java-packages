@@ -41,6 +41,12 @@
 | [code-datasheet/exception.md](code-datasheet/exception.md) | 异常体系、错误码完整列表 |
 | [code-datasheet/share.md](code-datasheet/share.md) | 共享功能：分享/取消/查看/权限控制 |
 
+## code-log — 日志框架
+
+| 文档 | 内容 |
+|---|---|
+| [code-log/OVERVIEW.md](code-log/OVERVIEW.md) | 架构总览、目录结构、核心类速查 |
+
 
 ## 工程实践
 

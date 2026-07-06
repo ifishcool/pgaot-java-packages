@@ -18,6 +18,7 @@ else
     install_module code-sql
     install_module code-auth
     install_module code-datasheet
+    install_module code-log
     echo ""
     echo "全部完成，下游模块可直接 mvn compile/test"
 fi

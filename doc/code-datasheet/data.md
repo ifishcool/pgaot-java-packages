@@ -57,17 +57,14 @@ DataApi.sql("tenant_a", "SELECT * FROM sales WHERE amount > 100")
     ▼
 SqlExecutor.execute("tenant_a", rawSql)
     │
-    ├─ 1. 校验操作类型（仅允许 SELECT/INSERT/UPDATE/DELETE）
+    ├─ 1. SqlTableExtractor.parse(rawSql)
+    │    └─ 操作类型校验 + Druid AST 提取 allNames/targetNames
     │
-    ├─ 2. Druid AST 解析
-    │    SQLUtils.parseStatements(sql, MYSQL)
-    │    → SQLSelectStatement
-    │      └─ SQLExprTableSource(expr="sales")
+    ├─ 2. SqlPermissionChecker.validate(userId, parsed)
+    │    └─ 归属校验 + 共享权限校验 + 模式校验
     │
-    ├─ 3. 表名替换
-    │    列出该用户所有表 → {sales, orders}
-    │    遍历 AST 节点，匹配到逻辑表名 → 替换为 tenant_a_sales
-    │    SQLUtils.toSQLString()
+    ├─ 3. SqlAstRewriter.rewrite(parsed, tableMap)
+    │    └─ AST 节点级重写逻辑表名 → 物理表名
     │
     └─ 4. code-sql sql() 执行
 ```
@@ -101,16 +98,19 @@ RowManager.insert(rows)  → 批量插入
 
 ## 关键源码
 
-| 文件 | 内容 |
-|---|---|
-| `DataApi.java` | 7 个委托方法 + importCsv/importJson/updateCell/deleteRow |
-| `RowManager.java:25-45` | insert() + 批量，含共享 INSERT 权限校验 |
-| `RowManager.java:48-52` | delete()，含共享 DELETE 权限校验 |
-| `RowManager.java:55-69` | update()，含共享 UPDATE 权限校验 |
-| `SqlExecutor.java:26-56` | execute() + Druid AST 替换 |
-| `SqlExecutor.java:58-97` | rewrite() + AST 遍历 + 权限校验 |
-| `ExportManager.java:32-44` | exportCsv() Jackson 格式化 |
-| `ExportManager.java:46-57` | exportJson() Jackson 格式化 |
-| `ExportManager.java:70-92` | query() 含权限/模式校验 |
-| `ExportManager.java:100-115` | parseCsv() Jackson CsvMapper |
-| `ExportManager.java:118-128` | parseJson() Jackson ObjectMapper |
+| 文件                         | 内容                                                     |
+| ---------------------------- | -------------------------------------------------------- |
+| `DataApi.java`               | 7 个委托方法 + importCsv/importJson/updateCell/deleteRow |
+| `RowManager.java:25-45`      | insert() + 批量，含共享 INSERT 权限校验                  |
+| `RowManager.java:48-52`      | delete()，含共享 DELETE 权限校验                         |
+| `RowManager.java:55-69`      | update()，含共享 UPDATE 权限校验                         |
+| `SqlExecutor.java`           | 执行编排（解析 → 校验 → 重写 → 执行）                    |
+| `SqlTableExtractor.java`     | Druid AST 解析 + allNames/targetNames 提取               |
+| `SqlPermissionChecker.java`  | 归属/共享/模式校验                                       |
+| `SqlAstRewriter.java`        | AST 节点级表名重写                                       |
+| `SqlParsedQuery.java`        | SQL 解析结果模型                                         |
+| `ExportManager.java:32-44`   | exportCsv() Jackson 格式化                               |
+| `ExportManager.java:46-57`   | exportJson() Jackson 格式化                              |
+| `ExportManager.java:70-92`   | query() 含权限/模式校验                                  |
+| `ExportManager.java:100-115` | parseCsv() Jackson CsvMapper                             |
+| `ExportManager.java:118-128` | parseJson() Jackson ObjectMapper                         |

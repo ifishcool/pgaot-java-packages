@@ -9,7 +9,7 @@
 ```
 ┌─────────────────────────────────────────────────┐
 │                    LoginEntry                     │  ← 唯一对外入口
-│              (static: login/validate/logout)      │
+│      (static: login/validate/logout + providers)  │
 └────────────────────┬────────────────────────────┘
                      │
                      ▼
@@ -87,25 +87,34 @@ code-auth/src/main/java/com/pgaot/account/auth/
 
 ## 核心类速查
 
-| 类 | 层级 | 职责 |
-|---|---|---|
-| `LoginEntry` | api | 唯一入口，login/validate/logout |
-| `LoginService` | core | 认证引擎，协调策略/JWT/Redis |
-| `StrategyRegistry` | core | 策略注册与查找（ConcurrentHashMap） |
-| `LoginStrategy` | core | 策略接口（1 个方法） |
-| `YuntowerStrategy` | core | 云塔 code → token → userInfo |
-| `YuntowerAuthFactory` | core | 从环境变量创建 LoginService |
-| `JwtUtil` | core | JWT 生成/校验（jjwt 库） |
-| `TokenStore` | api | Token 存储接口 |
-| `RedisTokenStore` | api | Redis 实现（Lettuce） |
-| `Redis` | core | 通用 Redis 客户端 |
-| `LoginConfig` | common | JWT 密钥 + 过期时间 |
-| `LoginException` | exception | 认证异常（5 个工厂方法） |
+| 类                    | 层级      | 职责                                |
+| --------------------- | --------- | ----------------------------------- |
+| `LoginEntry`          | api       | 唯一入口，login/validate/logout     |
+| `LoginService`        | core      | 认证引擎，协调策略/JWT/Redis        |
+| `StrategyRegistry`    | core      | 策略注册与查找（ConcurrentHashMap） |
+| `LoginStrategy`       | core      | 策略接口（1 个方法）                |
+| `YuntowerStrategy`    | core      | 云塔 code → token → userInfo        |
+| `YuntowerAuthFactory` | core      | 从环境变量创建 LoginService         |
+| `JwtUtil`             | core      | JWT 生成/校验（jjwt 库）            |
+| `TokenStore`          | api       | Token 存储接口                      |
+| `RedisTokenStore`     | api       | Redis 实现（Lettuce）               |
+| `Redis`               | core      | 通用 Redis 客户端                   |
+| `LoginConfig`         | common    | JWT 密钥 + 过期时间                 |
+| `LoginException`      | exception | 认证异常（5 个工厂方法）            |
+
+## LoginEntry 注入能力
+
+`LoginEntry` 支持两种运行时装配方式：
+
+- `configure(service, tokenManager)`：注入固定实例（适合单测、隔离环境）
+- `configureProviders(serviceProvider, tokenProvider)`：注入延迟工厂（适合多租户、多环境动态切换）
+
+`resetDefaults()` 可恢复默认工厂（`YuntowerAuthFactory.fromEnv()`）。
 
 ## 依赖
 
-| 依赖 | 版本 | 用途 |
-|---|---|---|
-| yuntower-account-java-sdk | 1.0.0 | 云塔 API |
-| jjwt-api/impl/jackson | 0.12.6 | JWT |
-| lettuce-core | 6.4.1 | Redis |
+| 依赖                      | 版本   | 用途     |
+| ------------------------- | ------ | -------- |
+| yuntower-account-java-sdk | 1.0.0  | 云塔 API |
+| jjwt-api/impl/jackson     | 0.12.6 | JWT      |
+| lettuce-core              | 6.4.1  | Redis    |

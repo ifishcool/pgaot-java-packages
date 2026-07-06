@@ -21,7 +21,7 @@ class ShareTest {
     @BeforeAll
     static void requireDb() {
         assumeTrue(EnvLoader.hasDb(), "跳过：需要数据库");
-        engine = DatasheetEngine.fromEnv("DATA");
+        engine = DatasheetEngine.fromEnv();
     }
 
     @BeforeAll

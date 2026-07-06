@@ -112,47 +112,62 @@ if (result.isSuccess()) {
 
 ### LoginEntry
 
-| 方法 | 说明 |
-|---|---|
-| `login(type, params)` | 登录 — 不抛异常，通过 `isSuccess()` 判断 |
-| `validate(token)` | 校验 JWT + 单设备登录检查 |
-| `logout(token)` | 退出登录 |
+| 方法                                                 | 说明                                            |
+| ---------------------------------------------------- | ----------------------------------------------- |
+| `login(type, params)`                                | 登录 — 不抛异常，通过 `isSuccess()` 判断        |
+| `validate(token)`                                    | 校验 JWT + 单设备登录检查                       |
+| `logout(token)`                                      | 退出登录                                        |
+| `configure(service, tokenManager)`                   | 注入固定实例（测试/多租户）                     |
+| `configureProviders(serviceProvider, tokenProvider)` | 注入延迟工厂（多环境切换）                      |
+| `resetDefaults()`                                    | 恢复默认工厂（`YuntowerAuthFactory.fromEnv()`） |
+
+#### 多环境/单测注入示例
+
+```java
+LoginEntry.configureProviders(
+    () -> YuntowerAuthFactory.create(appIdA, secretA, jwtA, redisA),
+    () -> new ApiTokenManager(new TokenRepository(JpaTemplate.fromEnv("A", true, ApiTokenEntity.class)))
+);
+
+// 用例结束后恢复默认
+LoginEntry.resetDefaults();
+```
 
 ### LoginType
 
-| 常量 | params |
-|---|---|
+| 常量                 | params                  |
+| -------------------- | ----------------------- |
 | `LoginType.YUNTOWER` | `Map.of("code", "xxx")` |
 
 ### LoginResult
 
-| 方法 | 说明 |
-|---|---|
-| `isSuccess()` | 是否成功 |
-| `getCode()` | 错误码（0=成功） |
-| `getMessage()` | 错误消息 |
-| `getAccessToken()` | 访问凭证 |
-| `getRefreshToken()` | 刷新凭证 |
-| `getUserId()` | 用户唯一标识 |
-| `getNickname()` | 昵称 |
-| `getAvatar()` | 头像 URL |
+| 方法                | 说明             |
+| ------------------- | ---------------- |
+| `isSuccess()`       | 是否成功         |
+| `getCode()`         | 错误码（0=成功） |
+| `getMessage()`      | 错误消息         |
+| `getAccessToken()`  | 访问凭证         |
+| `getRefreshToken()` | 刷新凭证         |
+| `getUserId()`       | 用户唯一标识     |
+| `getNickname()`     | 昵称             |
+| `getAvatar()`       | 头像 URL         |
 
 ### LoginUser
 
-| 方法 | 说明 |
-|---|---|
-| `getUserId()` | 用户唯一标识 |
-| `getJti()` | JWT 唯一 ID |
-| `get(key)` | 额外字段 |
+| 方法             | 说明               |
+| ---------------- | ------------------ |
+| `getUserId()`    | 用户唯一标识       |
+| `getJti()`       | JWT 唯一 ID        |
+| `get(key)`       | 额外字段           |
 | `getString(key)` | 额外字段（String） |
 
 ### TokenStore
 
-| 方法 | 说明 |
-|---|---|
+| 方法                     | 说明                            |
+| ------------------------ | ------------------------------- |
 | `save(userId, jti, ttl)` | 存 jti（覆盖旧值 = 单设备登录） |
-| `getJti(userId)` | 查当前有效 jti |
-| `remove(userId)` | 退出登录 |
+| `getJti(userId)`         | 查当前有效 jti                  |
+| `remove(userId)`         | 退出登录                        |
 
 ### Redis
 
@@ -161,7 +176,6 @@ import com.pgaot.account.auth.core.redis.Redis;
 Redis redis = new Redis();  // 自动读 CODE_AUTH_REDIS_URI
 redis.set("key", "value", 3600);
 ```
-
 
 ---
 
@@ -183,10 +197,10 @@ LoginEntry.tokens().list("alice");        // 查看所有
 LoginEntry.tokens().revoke("alice", id);  // 吊销
 ```
 
-| Scope | 值 | 说明 |
-|---|---|---|
+| Scope            | 值               | 说明         |
+| ---------------- | ---------------- | ------------ |
 | `Datasheet.DATA` | `datasheet:data` | 数据表读写删 |
-| `SUPER` | `*:*:*` | 超级管理员 |
+| `SUPER`          | `*:*:*`          | 超级管理员   |
 
 ---
 

@@ -60,13 +60,19 @@ if (r.isSuccess()) {
 
 Controller 层不需要 try-catch。
 
-### LoginService 单例
+### LoginEntry 可注入 Provider
 
-`LoginEntry` 内部持有 `LoginService` 静态单例——整个 JVM 只有一个认证引擎实例，JwtUtil 和 TokenStore 跟着一起单例。
+`LoginEntry` 默认通过 `YuntowerAuthFactory.fromEnv()` 延迟创建 `LoginService`，并支持在运行时注入固定实例或 Provider，便于多环境切换和单测隔离。
 
 ```java
-// LoginEntry.java
-private static final LoginService SERVICE = YuntowerAuthFactory.fromEnv();
+// 固定实例注入
+LoginEntry.configure(loginService, tokenManager);
+
+// 延迟工厂注入（按需创建）
+LoginEntry.configureProviders(serviceProvider, tokenProvider);
+
+// 恢复默认工厂
+LoginEntry.resetDefaults();
 ```
 
 ### uidBinder
@@ -103,11 +109,12 @@ public class LoginResult {
 
 ## 关键源码
 
-| 文件 | 行数 | 内容 |
-|---|---|---|
-| `LoginEntry.java:41-49` | 9 行 | login 入口 + 异常转换 |
-| `LoginService.java:25-31` | 7 行 | 构造，组装依赖 |
-| `LoginService.java:34-48` | 15 行 | 核心登录流程（含邮箱持久化） |
-| `YuntowerStrategy.java:25-34` | 10 行 | 云塔 code → UserInfo（含 email） |
-| `YuntowerAuthFactory.java:27-51` | 25 行 | 从环境变量构建 LoginService |
-| `UserRepository.java:25-38` | 14 行 | upsert 持久化 userId/nickname/avatar/email |
+| 文件                             | 行数  | 内容                                       |
+| -------------------------------- | ----- | ------------------------------------------ |
+| `LoginEntry.java:39-59`          | 21 行 | Provider 注入与默认恢复                    |
+| `LoginEntry.java:68-75`          | 8 行  | login 入口 + 异常转换                      |
+| `LoginService.java:25-31`        | 7 行  | 构造，组装依赖                             |
+| `LoginService.java:34-48`        | 15 行 | 核心登录流程（含邮箱持久化）               |
+| `YuntowerStrategy.java:25-34`    | 10 行 | 云塔 code → UserInfo（含 email）           |
+| `YuntowerAuthFactory.java:27-51` | 25 行 | 从环境变量构建 LoginService                |
+| `UserRepository.java:25-38`      | 14 行 | upsert 持久化 userId/nickname/avatar/email |

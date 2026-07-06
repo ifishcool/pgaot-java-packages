@@ -4,6 +4,7 @@ import com.pgaot.sql.api.JpaTemplate;
 import com.pgaot.sql.api.SqlTemplate;
 import com.pgaot.sql.api.SqlTemplateConfig;
 import com.pgaot.sql.common.config.EnvConfig;
+import com.pgaot.sql.jpa.entity.AuditLogEntity;
 import com.pgaot.sql.jpa.entity.DsShareEntity;
 import com.pgaot.sql.jpa.entity.DsTableEntity;
 
@@ -38,13 +39,13 @@ public class DatasheetConfig {
                 SqlTemplateConfig.fromEnv(name).readWriteDelete());
         this.metaJpa = JpaTemplate.fromEnv(name,
                 EnvConfig.autoDdl(name),
-                DsTableEntity.class, DsShareEntity.class);
+                DsTableEntity.class, DsShareEntity.class, AuditLogEntity.class);
     }
 
     public SqlTemplate adminSql() { return adminSql; }
     public SqlTemplate readWriteSql() { return readWriteSql; }
 
-    /** 元数据 JPA 连接（ds_table / ds_share，自动建表） */
+    /** JPA 连接（ds_table / ds_share / audit_log，自动建表） */
     public JpaTemplate metaJpa() { return metaJpa; }
 
     /** 关闭所有连接池 */

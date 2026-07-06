@@ -35,22 +35,22 @@
 | 依赖 | 版本 | 用途 |
 |---|---|---|
 | yuntower-account-java-sdk | 1.0.0 | 云塔 API |
-| jjwt-api | 0.12.6 | JWT 生成/解析 |
-| jjwt-impl | 0.12.6 | JWT 实现（runtime） |
-| jjwt-jackson | 0.12.6 | JWT JSON（runtime） |
-| lettuce-core | 6.4.1 | Redis 客户端 |
-| code-sql | 1.0.0 | SQL 引擎（JPA 方式读 api_token/users） |
+| jjwt-api | 0.13.0 | JWT 生成/解析 |
+| jjwt-impl | 0.13.0 | JWT 实现（runtime） |
+| jjwt-jackson | 0.13.0 | JWT JSON（runtime） |
+| lettuce-core | 7.6.0 | Redis 客户端 |
+| code-sql | 1.0.0 | SQL 引擎（JPA） |
 | JUnit Jupiter | 5.11.4 | 单元测试（test） |
 
 ### code-sql
 
 | 依赖 | 版本 | 用途 |
 |---|---|---|
-| druid | 1.2.23 | 连接池 + 防火墙 |
-| spring-jdbc | 6.2.7 | JdbcTemplate |
+| druid | 1.2.28 | 连接池 + 防火墙 |
+| spring-jdbc | 7.0.8 | JdbcTemplate |
 | hibernate-core | 6.6.4 | JPA |
 | mysql-connector-j | 9.7.0 | MySQL 驱动 |
-| lombok | 1.18.36 | 编译期代码生成（provided） |
+| lombok | 1.18.46 | 编译期代码生成（provided） |
 | JUnit Jupiter | 5.11.4 | 单元测试（test） |
 
 ### code-datasheet
@@ -58,6 +58,15 @@
 | 依赖 | 版本 | 用途 |
 |---|---|---|
 | code-sql | 1.0.0 | SQL 执行引擎 |
-| jackson-databind | 2.18.3 | JSON 导入导出 |
-| jackson-dataformat-csv | 2.18.3 | CSV 导入导出 |
-| lombok | 1.18.36 | 编译期代码生成（provided） |
+| jackson-databind | 2.22.0 | JSON 导入导出 |
+| jackson-dataformat-csv | 2.22.0 | CSV 导入导出 |
+| lombok | 1.18.46 | 编译期代码生成（provided） |
+
+### code-log
+
+| 依赖 | 版本 | 用途 |
+|---|---|---|
+| code-sql | 1.0.0 | JPA 审计持久化 |
+| slf4j-api | 2.0.17 | 日志门面（MDC） |
+| lombok | 1.18.46 | 编译期代码生成（provided） |
+| JUnit Jupiter | 5.11.4 | 单元测试（test） |

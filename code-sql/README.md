@@ -287,11 +287,13 @@ code-sql/
         │   ├── ApiTokenEntity.java      # API Token
         │   ├── DsTableEntity.java       # 数据表元数据
         │   └── DsShareEntity.java       # 共享记录
+        │   └── AuditLogEntity.java      # 审计日志
         └── repository/
             ├── UserRepository.java
             ├── TokenRepository.java
             ├── TableRepository.java
             └── ShareRepository.java
+            └── AuditLogRepository.java
 ```
 
 ## License

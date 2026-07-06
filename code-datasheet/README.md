@@ -77,54 +77,54 @@ engine.tables().drop("alice", t.getId());
 
 ### TableApi
 
-| 方法 | 说明 |
-|---|---|
-| `create(ownerId, name, title, desc, columns)` | 建表 |
-| `drop(ownerId, tableId)` | 删除表 |
-| `rename/truncate/addColumn/dropColumn/renameColumn` | 表结构操作，需 owner |
-| `list(userId)` | 该用户所有表 |
-| `listWithSource(userId)` | 所有表 + 来源(OWNED/SHARED) + 权限 |
-| `get(tableId)` | 表结构（列信息实时从 INFORMATION_SCHEMA 读取） |
-| `setMode(ownerId, tableId, TableMode)` | 模式控制 |
+| 方法                                                | 说明                                           |
+| --------------------------------------------------- | ---------------------------------------------- |
+| `create(ownerId, name, title, desc, columns)`       | 建表                                           |
+| `drop(ownerId, tableId)`                            | 删除表                                         |
+| `rename/truncate/addColumn/dropColumn/renameColumn` | 表结构操作，需 owner                           |
+| `list(userId)`                                      | 该用户所有表                                   |
+| `listWithSource(userId)`                            | 所有表 + 来源(OWNED/SHARED) + 权限             |
+| `get(tableId)`                                      | 表结构（列信息实时从 INFORMATION_SCHEMA 读取） |
+| `setMode(ownerId, tableId, TableMode)`              | 模式控制                                       |
 
 ### ColumnType
 
-| 类型 | MySQL |
-|---|---|
-| `STRING` | VARCHAR(512) |
-| `TEXT` | TEXT |
-| `INT` | INT |
-| `BIGINT` | BIGINT |
-| `TINYINT` | TINYINT |
-| `DOUBLE` | DOUBLE |
-| `DECIMAL` | DECIMAL(20,4) |
-| `DATE` | DATE |
-| `TIME` | TIME |
-| `DATETIME` | DATETIME |
-| `TIMESTAMP` | TIMESTAMP |
-| `BOOLEAN` | TINYINT(1) |
-| `JSON` | JSON |
+| 类型        | MySQL         |
+| ----------- | ------------- |
+| `STRING`    | VARCHAR(512)  |
+| `TEXT`      | TEXT          |
+| `INT`       | INT           |
+| `BIGINT`    | BIGINT        |
+| `TINYINT`   | TINYINT       |
+| `DOUBLE`    | DOUBLE        |
+| `DECIMAL`   | DECIMAL(20,4) |
+| `DATE`      | DATE          |
+| `TIME`      | TIME          |
+| `DATETIME`  | DATETIME      |
+| `TIMESTAMP` | TIMESTAMP     |
+| `BOOLEAN`   | TINYINT(1)    |
+| `JSON`      | JSON          |
 
 ### DataApi
 
-| 方法 | 说明 |
-|---|---|
-| `insert(userId, tableId, row/rows)` | 插入（最多 1000 行） |
-| `update/delete` | 按条件更新/删除 |
-| `updateCell(userId, tableId, rowId, col, val)` | 更新指定行列 |
-| `deleteRow(userId, tableId, rowId)` | 删除指定行 |
-| `sql(userId, sql)` | 执行用户 SQL（SELECT/INSERT/UPDATE/DELETE，禁止 DDL） |
-| `exportCsv/exportJson` | 导出 |
-| `importCsv/importJson` | 导入 |
-| `importCsv/importJson` | 导入 |
+| 方法                                           | 说明                                                  |
+| ---------------------------------------------- | ----------------------------------------------------- |
+| `insert(userId, tableId, row/rows)`            | 插入（最多 1000 行）                                  |
+| `update/delete`                                | 按条件更新/删除                                       |
+| `updateCell(userId, tableId, rowId, col, val)` | 更新指定行列                                          |
+| `deleteRow(userId, tableId, rowId)`            | 删除指定行                                            |
+| `sql(userId, sql)`                             | 执行用户 SQL（SELECT/INSERT/UPDATE/DELETE，禁止 DDL） |
+| `exportCsv/exportJson`                         | 导出                                                  |
+| `importCsv/importJson`                         | 导入                                                  |
+| `importCsv/importJson`                         | 导入                                                  |
 
 ### ShareApi
 
-| 方法 | 说明 |
-|---|---|
-| `share(ownerId, tableId, toUser, perm)` | 共享表 |
-| `unshare(ownerId, tableId, toUser)` | 取消共享 |
-| `list/listSent/listReceived` | 查看共享关系 |
+| 方法                                    | 说明         |
+| --------------------------------------- | ------------ |
+| `share(ownerId, tableId, toUser, perm)` | 共享表       |
+| `unshare(ownerId, tableId, toUser)`     | 取消共享     |
+| `list/listSent/listReceived`            | 查看共享关系 |
 
 ### SharePermission
 
@@ -134,12 +134,12 @@ engine.tables().drop("alice", t.getId());
 
 ### TableMode
 
-| 模式 | SELECT | INSERT/UPDATE | DELETE |
-|---|---|---|---|
-| `READ_ONLY` | 允许 | 禁止 | 禁止 |
-| `WRITE_ONLY` | 禁止 | 允许 | 禁止 |
-| `READ_WRITE` | 允许 | 允许 | 禁止 |
-| `ALL`（默认） | 允许 | 允许 | 允许 |
+| 模式          | SELECT | INSERT/UPDATE | DELETE |
+| ------------- | ------ | ------------- | ------ |
+| `READ_ONLY`   | 允许   | 禁止          | 禁止   |
+| `WRITE_ONLY`  | 禁止   | 允许          | 禁止   |
+| `READ_WRITE`  | 允许   | 允许          | 禁止   |
+| `ALL`（默认） | 允许   | 允许          | 允许   |
 
 ---
 
@@ -149,7 +149,8 @@ engine.tables().drop("alice", t.getId());
 表前缀: 物理表名 = userId_tableName
 
 SQL 执行:
-  Druid AST 提取表名 → 目标表/源表分离校验 → 表名替换 → readWriteDelete 防火墙执行
+  SqlTableExtractor 解析 → SqlPermissionChecker 鉴权/模式校验
+  → SqlAstRewriter AST 重写物理表名 → readWriteDelete 防火墙执行
 
 模式: READ_ONLY(禁写) / WRITE_ONLY(禁读) / READ_WRITE(默认)
 
@@ -170,7 +171,11 @@ code-datasheet/src/main/java/com/pgaot/datasheet/
 ├── core/
 │   ├── TableManager.java             # DDL
 │   ├── RowManager.java               # 增删改 + 模式/共享校验
-│   ├── SqlExecutor.java              # AST 提取 + 权限 + 替换
+│   ├── SqlExecutor.java              # 执行编排器
+│   ├── SqlTableExtractor.java        # AST 解析 + 目标表/源表提取
+│   ├── SqlPermissionChecker.java     # 归属/共享/模式校验
+│   ├── SqlAstRewriter.java           # AST 级物理表名重写
+│   ├── SqlParsedQuery.java           # 解析结果模型
 │   └── ExportManager.java            # 导入导出
 ├── metadata/
 │   ├── MetadataStore.java            # 委托 code-sql JPA + INFO_SCHEMA

@@ -20,7 +20,7 @@ class ImportExportTest {
     @BeforeAll
     static void requireDb() {
         assumeTrue(EnvLoader.hasDb(), "跳过：需要数据库");
-        engine = DatasheetEngine.fromEnv("DATA");
+        engine = DatasheetEngine.fromEnv();
         for (TableInfo old : engine.tables().list(USER))
             try { engine.tables().drop(USER, old.getId()); } catch (Exception ignored) {}
     }

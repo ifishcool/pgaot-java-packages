@@ -1,24 +1,22 @@
 package com.pgaot.account.auth.api;
 
-import com.pgaot.account.auth.api.LoginType;
+import java.util.Map;
+import java.util.function.Supplier;
 
 import com.pgaot.account.auth.api.model.LoginResult;
 import com.pgaot.account.auth.api.model.LoginUser;
-
-import com.pgaot.account.auth.exception.LoginException;
 import com.pgaot.account.auth.core.LoginService;
+import com.pgaot.account.auth.core.yuntower.YuntowerAuthFactory;
+import com.pgaot.account.auth.exception.LoginException;
 import com.pgaot.sql.api.JpaTemplate;
 import com.pgaot.sql.jpa.entity.ApiTokenEntity;
 import com.pgaot.sql.jpa.repository.TokenRepository;
 
-import com.pgaot.account.auth.core.yuntower.YuntowerAuthFactory;
-
-import java.util.Map;
-
 /**
  * 统一登录入口.
  *
- * <p>环境变量: YUNTOWER_APP_ID, YUNTOWER_APP_SECRET, CODE_AUTH_JWT_SECRET
+ * <p>
+ * 环境变量: YUNTOWER_APP_ID, YUNTOWER_APP_SECRET, CODE_AUTH_JWT_SECRET
  *
  * <pre>{@code
  * LoginResult r = LoginEntry.login(LoginType.YUNTOWER, Map.of("code", "xxx"));
@@ -30,11 +28,35 @@ import java.util.Map;
  */
 public final class LoginEntry {
 
-    private static final LoginService SERVICE = YuntowerAuthFactory.fromEnv();
-    private static final ApiTokenManager TOKENS = new ApiTokenManager(
-            new TokenRepository(JpaTemplate.fromEnv("", true, ApiTokenEntity.class)));
+    private static Supplier<LoginService> serviceProvider = YuntowerAuthFactory::fromEnv;
+    private static Supplier<ApiTokenManager> tokenProvider = LoginEntry::createDefaultTokenManager;
+    private static LoginService service;
+    private static ApiTokenManager tokens;
 
-    private LoginEntry() {}
+    private LoginEntry() {
+    }
+
+    public static synchronized void configure(LoginService loginService, ApiTokenManager tokenManager) {
+        serviceProvider = () -> loginService;
+        tokenProvider = () -> tokenManager;
+        service = loginService;
+        tokens = tokenManager;
+    }
+
+    public static synchronized void configureProviders(Supplier<LoginService> loginServiceProvider,
+            Supplier<ApiTokenManager> tokenManagerProvider) {
+        serviceProvider = loginServiceProvider;
+        tokenProvider = tokenManagerProvider;
+        service = null;
+        tokens = null;
+    }
+
+    public static synchronized void resetDefaults() {
+        serviceProvider = YuntowerAuthFactory::fromEnv;
+        tokenProvider = LoginEntry::createDefaultTokenManager;
+        service = null;
+        tokens = null;
+    }
 
     /**
      * 登录 — 不抛异常，通过 {@link LoginResult#isSuccess()} 判断成败.
@@ -45,7 +67,7 @@ public final class LoginEntry {
      */
     public static LoginResult login(String type, Map<String, Object> params) {
         try {
-            return SERVICE.login(type, params);
+            return getService().login(type, params);
         } catch (LoginException e) {
             return new LoginResult(e.getCode(), e.getMessage());
         } catch (Exception e) {
@@ -61,14 +83,34 @@ public final class LoginEntry {
      * @throws LoginException token无效 / 过期 / 被挤下线
      */
     public static LoginUser validate(String jwtToken) {
-        return SERVICE.validate(jwtToken);
+        return getService().validate(jwtToken);
     }
 
     /** 退出登录 — 删除 token 存储记录 */
     public static void logout(String jwtToken) {
-        SERVICE.logout(jwtToken);
+        getService().logout(jwtToken);
     }
 
     /** API Token 管理 */
-    public static ApiTokenManager tokens() { return TOKENS; }
+    public static ApiTokenManager tokens() {
+        return getTokens();
+    }
+
+    private static synchronized LoginService getService() {
+        if (service == null) {
+            service = serviceProvider.get();
+        }
+        return service;
+    }
+
+    private static synchronized ApiTokenManager getTokens() {
+        if (tokens == null) {
+            tokens = tokenProvider.get();
+        }
+        return tokens;
+    }
+
+    private static ApiTokenManager createDefaultTokenManager() {
+        return new ApiTokenManager(new TokenRepository(JpaTemplate.fromEnv("", true, ApiTokenEntity.class)));
+    }
 }

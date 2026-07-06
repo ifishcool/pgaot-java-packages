@@ -16,6 +16,7 @@
         <module>code-sql</module>
         <module>code-auth</module>
         <module>code-datasheet</module>
+        <module>code-log</module>
     </modules>
 
     <properties>
@@ -113,6 +114,13 @@
                 <groupId>com.fasterxml.jackson.dataformat</groupId>
                 <artifactId>jackson-dataformat-csv</artifactId>
                 <version>2.22.0</version>
+            </dependency>
+
+            <!-- Log -->
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>2.0.17</version>
             </dependency>
 
             <!-- Test -->

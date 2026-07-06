@@ -22,7 +22,7 @@ class IsolationTest {
     @BeforeAll
     static void requireDb() {
         assumeTrue(EnvLoader.hasDb(), "跳过：需要数据库");
-        engine = DatasheetEngine.fromEnv("DATA");
+        engine = DatasheetEngine.fromEnv();
         for (String u : List.of(USER_A, USER_B))
             for (TableInfo old : engine.tables().list(u))
                 try { engine.tables().drop(u, old.getId()); } catch (Exception ignored) {}

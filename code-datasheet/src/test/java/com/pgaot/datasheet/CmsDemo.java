@@ -23,7 +23,7 @@ class CmsDemo {
     @BeforeAll
     static void setup() {
         assumeTrue(EnvLoader.hasDb(), "跳过：需要数据库");
-        engine = DatasheetEngine.fromEnv("DATA");
+        engine = DatasheetEngine.fromEnv();
         for (String u : List.of(ADMIN, EDITOR, REVIEWER))
             for (TableInfo old : engine.tables().list(u))
                 try { engine.tables().drop(u, old.getId()); } catch (Exception ignored) {}
@@ -74,8 +74,11 @@ class CmsDemo {
     }
 
     @Test @Order(7) void editorCannotAccessUnshared() {
+        // editor 未共享给 articles_secret，应拒绝
+        engine.tables().create(ADMIN, "articles_secret", "机密文章", null, List.of(
+                new ColumnInfo("title", ColumnType.STRING, true)));
         assertThrows(Exception.class, () ->
-                engine.data().sql(EDITOR, "SELECT * FROM articles WHERE title IN (SELECT filename FROM media WHERE 1=0)"));
+                engine.data().sql(EDITOR, "SELECT * FROM articles_secret"));
     }
 
     @AfterAll

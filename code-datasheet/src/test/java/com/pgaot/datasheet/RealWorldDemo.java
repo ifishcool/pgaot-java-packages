@@ -23,7 +23,7 @@ class RealWorldDemo {
     @BeforeAll
     static void setup() {
         assumeTrue(EnvLoader.hasDb(), "跳过：需要数据库");
-        engine = DatasheetEngine.fromEnv("DATA");
+        engine = DatasheetEngine.fromEnv();
         for (String u : List.of(ALICE, BOB, CHARLIE))
             for (TableInfo old : engine.tables().list(u))
                 try { engine.tables().drop(u, old.getId()); } catch (Exception ignored) {}
