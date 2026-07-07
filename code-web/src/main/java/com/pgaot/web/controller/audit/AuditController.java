@@ -3,6 +3,7 @@ package com.pgaot.web.controller.audit;
 import com.pgaot.sql.api.JpaTemplate;
 import com.pgaot.sql.jpa.entity.AuditLogEntity;
 import com.pgaot.sql.jpa.repository.AuditLogRepository;
+import com.pgaot.web.annotation.RequiredAuth;
 import com.pgaot.web.common.ApiResponse;
 import com.pgaot.web.controller.BaseController;
 import io.swagger.v3.oas.annotations.Operation;
@@ -14,6 +15,7 @@ import java.util.List;
 @Tag(name = "审计日志")
 @RestController
 @RequestMapping("/api/audit")
+@RequiredAuth
 public class AuditController extends BaseController {
 
     private volatile AuditLogRepository repo;

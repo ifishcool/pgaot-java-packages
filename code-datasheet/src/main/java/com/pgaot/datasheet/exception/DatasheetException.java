@@ -1,4 +1,5 @@
 package com.pgaot.datasheet.exception;
+import lombok.Getter;
 
 import com.pgaot.datasheet.common.code.ErrorCode;
 import com.pgaot.datasheet.common.code.IResultCode;
@@ -11,6 +12,7 @@ import com.pgaot.datasheet.common.code.IResultCode;
  * throw DatasheetException.notOwner();
  * }</pre>
  */
+@Getter
 public class DatasheetException extends RuntimeException {
 
     private final int code;
@@ -61,5 +63,4 @@ public class DatasheetException extends RuntimeException {
     }
 
     /** 错误码 */
-    public int getCode() { return code; }
 }

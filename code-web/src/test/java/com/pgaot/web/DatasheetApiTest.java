@@ -59,7 +59,7 @@ class DatasheetApiTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(JSON.writeValueAsString(req)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.code").value(200))
                 .andReturn().getResponse().getContentAsString();
 
         tableId = JSON.readTree(resp).get("data").get("id").asText();
@@ -81,7 +81,7 @@ class DatasheetApiTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(JSON.writeValueAsString(req)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(0));
+                .andExpect(jsonPath("$.code").value(200));
     }
 
     // ═══════════ 查询 ═══════════
@@ -96,7 +96,7 @@ class DatasheetApiTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(JSON.writeValueAsString(req)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data.length()").value(3));
     }
 
@@ -115,7 +115,7 @@ class DatasheetApiTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(JSON.writeValueAsString(req)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(0));
+                .andExpect(jsonPath("$.code").value(200));
     }
 
     // ═══════════════ 验证更新 ═══════════════
@@ -150,7 +150,7 @@ class DatasheetApiTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(JSON.writeValueAsString(req)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(0));
+                .andExpect(jsonPath("$.code").value(200));
     }
 
     // ═══════════════ 验证删除 ═══════════════
@@ -180,7 +180,7 @@ class DatasheetApiTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(JSON.writeValueAsString(req)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(0));
+                .andExpect(jsonPath("$.code").value(200));
     }
 
     // ═══════════════ 导出 CSV/JSON ═══════════════
@@ -191,14 +191,14 @@ class DatasheetApiTest {
                         .param("userId", USER)
                         .param("tableId", tableId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data").isString());
 
         mvc.perform(get("/api/data/export/json")
                         .param("userId", USER)
                         .param("tableId", tableId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data").isString());
     }
 
@@ -209,7 +209,7 @@ class DatasheetApiTest {
         mvc.perform(get("/api/tables")
                         .param("userId", USER))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data.length()").value(1));
     }
 
@@ -225,7 +225,7 @@ class DatasheetApiTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(JSON.writeValueAsString(req)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data[0].cnt").value(2));
     }
 
@@ -238,7 +238,7 @@ class DatasheetApiTest {
                         .param("tableId", tableId)
                         .param("columns", "name,price"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data").value(
                         org.hamcrest.Matchers.containsString("笔记本")));
     }
@@ -255,12 +255,12 @@ class DatasheetApiTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(JSON.writeValueAsString(modeReq)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(0));
+                .andExpect(jsonPath("$.code").value(200));
 
         mvc.perform(post("/api/tables/" + tableId + "/truncate")
                         .param("userId", USER))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(0));
+                .andExpect(jsonPath("$.code").value(200));
 
         SqlRequest req = new SqlRequest();
         req.setSql("SELECT * FROM products");
@@ -319,6 +319,6 @@ class DatasheetApiTest {
         mvc.perform(delete("/api/tables/" + tableId)
                         .param("userId", USER))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(0));
+                .andExpect(jsonPath("$.code").value(200));
     }
 }

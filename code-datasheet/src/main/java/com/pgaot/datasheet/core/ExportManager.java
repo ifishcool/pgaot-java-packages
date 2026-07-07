@@ -54,10 +54,9 @@ public class ExportManager {
             throw DatasheetException.rowValidationFailed("max export rows: " + DatasheetConstants.MAX_EXPORT_ROWS);
 
         if (columns != null && !columns.isEmpty()) {
-            List<String> cols = columns;
             rows = rows.stream().map(row -> {
                 Map<String, Object> f = new LinkedHashMap<>();
-                for (String c : cols) f.put(c, row.get(c));
+                for (String c : columns) f.put(c, row.get(c));
                 return f;
             }).collect(Collectors.toList());
         }
@@ -102,15 +101,16 @@ public class ExportManager {
             CsvSchema schema = CsvSchema.emptySchema().withHeader();
             var it = CSV.readerFor(new TypeReference<Map<String, String>>() {})
                     .with(schema).readValues(csv);
-            List<Map<String, Object>> rows = new ArrayList<>();
-            while (it.hasNext()) {
-                @SuppressWarnings("unchecked")
-                Map<String, String> raw = (Map<String, String>) it.next();
-                Map<String, Object> row = new LinkedHashMap<>(raw);
-                rows.add(row);
+            try (it) {
+                List<Map<String, Object>> rows = new ArrayList<>();
+                while (it.hasNext()) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, String> raw = (Map<String, String>) it.next();
+                    rows.add(new LinkedHashMap<>(raw));
+                }
+                if (rows.isEmpty()) throw DatasheetException.rowValidationFailed("CSV 至少需要表头+1行数据");
+                return rows;
             }
-            if (rows.isEmpty()) throw DatasheetException.rowValidationFailed("CSV 至少需要表头+1行数据");
-            return rows;
         } catch (IOException e) {
             throw DatasheetException.rowValidationFailed("CSV parse: " + e.getMessage());
         }

@@ -37,12 +37,13 @@ public class TemplateExecutor {
     /** 分页查询 — 自动拼 COUNT + LIMIT */
     public PageResponse<Map<String, Object>> page(String sql, PageQuery pq, Object... params) {
         String countSql = "SELECT COUNT(*) FROM (" + sql + ") _t";
-        long total;
+        Long count;
         if (params.length > 0) {
-            total = jdbc.queryForObject(countSql, Long.class, params);
+            count = jdbc.queryForObject(countSql, Long.class, params);
         } else {
-            total = jdbc.queryForObject(countSql, Long.class);
+            count = jdbc.queryForObject(countSql, Long.class);
         }
+        long total = count != null ? count : 0L;
 
         String pageSql = sql + " LIMIT " + pq.getSize() + " OFFSET " + pq.getOffset();
         List<Map<String, Object>> rows;

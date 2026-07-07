@@ -47,7 +47,7 @@
 | 依赖 | 版本 | 用途 |
 |---|---|---|
 | druid | 1.2.28 | 连接池 + 防火墙 |
-| spring-jdbc | 7.0.8 | JdbcTemplate |
+| spring-jdbc | 6.2.1 | JdbcTemplate |
 | hibernate-core | 6.6.4 | JPA |
 | mysql-connector-j | 9.7.0 | MySQL 驱动 |
 | lombok | 1.18.46 | 编译期代码生成（provided） |
@@ -70,3 +70,14 @@
 | slf4j-api | 2.0.17 | 日志门面（MDC） |
 | lombok | 1.18.46 | 编译期代码生成（provided） |
 | JUnit Jupiter | 5.11.4 | 单元测试（test） |
+
+### code-web
+
+| 依赖 | 版本 | 用途 |
+|---|---|---|
+| code-auth | 1.0.0 | 认证 |
+| code-datasheet | 1.0.0 | 数据表 |
+| code-log | 1.0.0 | 审计日志 |
+| spring-boot-starter-web | 3.4.1 | REST API |
+| spring-boot-starter-aop | 3.4.1 | AspectJ AOP |
+| knife4j-openapi3-jakarta | 4.5.0 | API 文档 |

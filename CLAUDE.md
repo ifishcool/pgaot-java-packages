@@ -61,6 +61,7 @@ Each module owns a 100,000-range block. Adding a module requires registering its
 | `10_xxx_xxx` | code-auth      |
 | `20_xxx_xxx` | code-sql       |
 | `30_xxx_xxx` | code-datasheet |
+| `40_xxx_xxx` | code-log       |
 
 Within a module, sub-ranges are allocated by the middle 3 digits (e.g., `20_001` = connection, `20_002` = SQL execution). Every `ErrorCode` enum must have a `main()` method that checks for duplicates.
 
@@ -160,9 +161,9 @@ Requires 8 GitHub Secrets: `GH_PACKAGES_TOKEN`, `YUNTOWER_APP_ID`, `YUNTOWER_APP
 - **Auth**: AspectJ AOP — `@RequiredAuth` / `@RequiredScope` annotate methods, `AuthAspect` auto-validates JWT/API Token via `@Before` pointcut.
 - **API response**: `ApiResponse<T>` — `{"code":0, "data":{}, "traceId":"xxx"}`. `ok(data)` / `fail(code, msg)`. traceId auto-filled from LogContext.
 - **Model naming**: `param/` for request DTOs, `vo/` for response VOs, organized by business domain.
-- **Swagger**: Knife4j (springdoc-openapi) at `/doc.html`.
+- **Swagger**: Knife4j at `/doc.html`.
 - **Controllers**: `auth/AuthController`, `datasheet/TableController`, `datasheet/DataController`, `audit/AuditController`.
-- **Dependency**: code-auth + code-datasheet + code-log, Spring Boot 3.4, SpringDoc 2.7.
+- **Dependency**: code-auth + code-datasheet + code-log, Spring Boot 3.4, Knife4j 4.5.
 
 ## Documentation
 
@@ -171,7 +172,7 @@ Requires 8 GitHub Secrets: `GH_PACKAGES_TOKEN`, `YUNTOWER_APP_ID`, `YUNTOWER_APP
 ## Dependencies
 
 - **code-auth**: yuntower-account-java-sdk 1.0.0, jjwt 0.13.0, lettuce-core 7.6.0, code-sql 1.0.0, JUnit 5.11.4 (test)
-- **code-sql**: druid 1.2.28, spring-jdbc 7.0.8, hibernate-core 6.6.4, mysql-connector-j 9.7.0, lombok 1.18.46 (provided), JUnit 5.11.4 (test)
+- **code-sql**: druid 1.2.28, spring-jdbc 6.2.1, hibernate-core 6.6.4, mysql-connector-j 9.7.0, lombok 1.18.46 (provided), JUnit 5.11.4 (test)
 - **code-datasheet**: code-sql 1.0.0, jackson-databind 2.22.0, jackson-dataformat-csv 2.22.0, lombok 1.18.46 (provided)
 - **code-log**: code-sql 1.0.0, slf4j-api 2.0.17, lombok 1.18.46 (provided), JUnit 5.11.4 (test)
 - **code-web**: code-auth + code-datasheet + code-log 1.0.0, Spring Boot 3.4, Knife4j 4.5

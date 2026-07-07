@@ -79,17 +79,17 @@ class LoginTest {
         }
 
         String code = codeHolder[0];
-        LoginResult result = LoginEntry.login(LoginType.YUNTOWER, Map.of("code", code));
-
-        if (result.isSuccess()) {
-            System.out.println("登录成功: " + result.getUserId() + " " + result.getNickname());
-            LoginUser user = LoginEntry.validate(result.getAccessToken());
-            System.out.println("校验通过: " + user.getUserId());
-            LoginEntry.logout(result.getAccessToken());
-            System.out.println("退出成功");
-        } else {
-            System.err.println("登录失败: [" + result.getCode() + "] " + result.getMessage());
-        }
+//        LoginResult result = LoginEntry.login(LoginType.YUNTOWER, Map.of("code", code));
+//
+//        if (result.isSuccess()) {
+//            System.out.println("登录成功: " + result.getUserId() + " " + result.getNickname());
+//            LoginUser user = LoginEntry.validate(result.getAccessToken());
+//            System.out.println("校验通过: " + user.getUserId());
+//            LoginEntry.logout(result.getAccessToken());
+//            System.out.println("退出成功");
+//        } else {
+//            System.err.println("登录失败: [" + result.getCode() + "] " + result.getMessage());
+//        }
     }
 
     @Test

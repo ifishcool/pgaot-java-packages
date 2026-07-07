@@ -1,8 +1,10 @@
 package com.pgaot.log.exception;
+import lombok.Getter;
 
 import com.pgaot.log.common.code.ErrorCode;
 import com.pgaot.log.common.code.IResultCode;
 
+@Getter
 public class LogException extends RuntimeException {
 
     private final int code;
@@ -25,5 +27,4 @@ public class LogException extends RuntimeException {
         return new LogException(ErrorCode.AUDIT_WRITE_FAILED, detail);
     }
 
-    public int getCode() { return code; }
 }

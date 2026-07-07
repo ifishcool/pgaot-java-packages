@@ -1,9 +1,11 @@
 package com.pgaot.sql.exception;
+import lombok.Getter;
 
 import com.pgaot.sql.common.code.ErrorCode;
 import com.pgaot.sql.common.code.IResultCode;
 
 /** SQL 异常 — 通过静态工厂方法创建，语义清晰 */
+@Getter
 public class SqlException extends RuntimeException {
 
     private final int code;
@@ -49,5 +51,4 @@ public class SqlException extends RuntimeException {
         return new SqlException(ErrorCode.JPA_EXECUTION_FAILED, detail);
     }
 
-    public int getCode() { return code; }
 }

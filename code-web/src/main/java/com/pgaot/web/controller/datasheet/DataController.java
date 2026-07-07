@@ -1,6 +1,7 @@
 package com.pgaot.web.controller.datasheet;
 
 import com.pgaot.datasheet.api.DatasheetEngine;
+import com.pgaot.web.annotation.RequiredAuth;
 import com.pgaot.web.common.ApiResponse;
 import com.pgaot.web.controller.BaseController;
 import com.pgaot.web.param.datasheet.*;
@@ -16,6 +17,7 @@ import java.util.Map;
 @Tag(name = "数据操作")
 @RestController
 @RequestMapping("/api/data")
+@RequiredAuth
 public class DataController extends BaseController {
 
     private volatile DatasheetEngine engine;
@@ -30,14 +32,14 @@ public class DataController extends BaseController {
     @PostMapping("/sql")
     public ApiResponse<List<Map<String, Object>>> sql(@RequestParam("userId") String userId,
                                                        @RequestBody SqlRequest body) {
-        return ApiResponse.ok(engine().data().sql(userId, body.getSql()));
+        return ApiResponse.ok(engine().data().sql(getUserId(), body.getSql()));
     }
 
     @Operation(summary = "插入行")
     @PostMapping("/insert")
     public ApiResponse<Void> insert(@RequestParam("userId") String userId,
                                      @RequestBody InsertRequest body) {
-        engine().data().insert(userId, body.getTableId(), body.getRows());
+        engine().data().insert(getUserId(), body.getTableId(), body.getRows());
         return ApiResponse.ok();
     }
 
@@ -45,7 +47,7 @@ public class DataController extends BaseController {
     @PostMapping("/update")
     public ApiResponse<Void> update(@RequestParam("userId") String userId,
                                      @RequestBody UpdateRequest body) {
-        engine().data().update(userId, body.getTableId(), body.getWhere(),
+        engine().data().update(getUserId(), body.getTableId(), body.getWhere(),
                 Map.of(body.getColumn(), body.getValue()));
         return ApiResponse.ok();
     }
@@ -54,7 +56,7 @@ public class DataController extends BaseController {
     @PostMapping("/delete")
     public ApiResponse<Void> delete(@RequestParam("userId") String userId,
                                      @RequestBody DeleteRequest body) {
-        engine().data().delete(userId, body.getTableId(), body.getWhere());
+        engine().data().delete(getUserId(), body.getTableId(), body.getWhere());
         return ApiResponse.ok();
     }
 
@@ -65,7 +67,7 @@ public class DataController extends BaseController {
                                           @RequestParam(name = "columns", required = false) String columns,
                                           @RequestParam(name = "where", required = false) String where) {
         List<String> cols = columns != null ? List.of(columns.split(",")) : null;
-        return ApiResponse.ok(engine().data().exportCsv(userId, tableId, cols, where));
+        return ApiResponse.ok(engine().data().exportCsv(getUserId(), tableId, cols, where));
     }
 
     @Operation(summary = "导出 JSON")
@@ -75,7 +77,7 @@ public class DataController extends BaseController {
                                            @RequestParam(name = "columns", required = false) String columns,
                                            @RequestParam(name = "where", required = false) String where) {
         List<String> cols = columns != null ? List.of(columns.split(",")) : null;
-        return ApiResponse.ok(engine().data().exportJson(userId, tableId, cols, where));
+        return ApiResponse.ok(engine().data().exportJson(getUserId(), tableId, cols, where));
     }
 
     @PreDestroy void destroy() { if (engine != null) engine.close(); }

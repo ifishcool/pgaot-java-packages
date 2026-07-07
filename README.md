@@ -59,15 +59,27 @@ PGAOT 平台 Java 二方包 Monorepo — 父 POM 统一版本管理。
 
 Maven 优先从 `~/.m2/repository` 解析依赖，`mvn install` 就是将 jar 装到本地仓库。
 
-## 如何发布
+## Docker 部署
 
-按 tag 前缀区分模块：
+```bash
+cd code-web && mvn package -DskipTests
+docker build --platform linux/amd64 -t pgaot/code-web .
+
+# 复制 .env.example 到 .env 并填入真实值
+cp .env.example .env
+
+# 启动
+docker compose up -d
+```
+
+## 如何发布
 
 ```bash
 git tag code-sql/v1.0.0       # 发布 code-sql
 git tag code-auth/v1.0.0      # 发布 code-auth
 git tag code-datasheet/v1.0.0 # 发布 code-datasheet
 git tag code-log/v1.0.0       # 发布 code-log
+git tag code-web/v1.0.0       # 发布 code-web
 git push --tags
 ```
 

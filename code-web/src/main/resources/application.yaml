@@ -1,3 +1,9 @@
 spring:
   application:
     name: code-web
+server:
+  port: ${SERVER_PORT:8080}
+
+# Knife4j 文档 — 生产环境设 DOC_ENABLED=false 关闭
+knife4j:
+  production: ${DOC_ENABLED:false}
