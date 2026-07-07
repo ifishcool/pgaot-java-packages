@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Setter
 @Getter
 @Entity
-@Table(name = "pgaot_user", indexes = {})
+@Table(name = "pgaot_user")
 public class UserEntity {
 
     /** 云塔用户唯一标识（主键） */

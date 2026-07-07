@@ -3,6 +3,8 @@ package com.pgaot.datasheet.api;
 import com.pgaot.datasheet.common.model.SharePermission;
 import com.pgaot.datasheet.exception.DatasheetException;
 import com.pgaot.datasheet.metadata.MetadataStore;
+import lombok.Getter;
+import lombok.Setter;
 import com.pgaot.datasheet.metadata.entity.ShareEntity;
 import com.pgaot.datasheet.metadata.entity.TableEntity;
 
@@ -106,35 +108,19 @@ public class ShareApi {
         try { return Long.parseLong(id); } catch (NumberFormatException e) { return 0L; }
     }
 
-    /** 共享信息 */
+    @Getter @Setter
     public static class ShareInfo {
         private String tableId;
         private String tableName;
         private String toUser;
         private SharePermission permission;
-        public String getTableId() { return tableId; }
-        public void setTableId(String v) { tableId = v; }
-        public String getTableName() { return tableName; }
-        public void setTableName(String v) { tableName = v; }
-        public String getToUser() { return toUser; }
-        public void setToUser(String v) { toUser = v; }
-        public SharePermission getPermission() { return permission; }
-        public void setPermission(SharePermission v) { permission = v; }
     }
 
-    /** 收到的共享 */
+    @Getter @Setter
     public static class ReceivedShare {
         private String tableId;
         private String tableName;
         private String fromUser;
         private SharePermission permission;
-        public String getTableId() { return tableId; }
-        public void setTableId(String v) { tableId = v; }
-        public String getTableName() { return tableName; }
-        public void setTableName(String v) { tableName = v; }
-        public String getFromUser() { return fromUser; }
-        public void setFromUser(String v) { fromUser = v; }
-        public SharePermission getPermission() { return permission; }
-        public void setPermission(SharePermission v) { permission = v; }
     }
 }

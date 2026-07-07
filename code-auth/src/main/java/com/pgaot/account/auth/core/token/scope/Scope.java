@@ -1,6 +1,5 @@
 package com.pgaot.account.auth.core.token.scope;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**

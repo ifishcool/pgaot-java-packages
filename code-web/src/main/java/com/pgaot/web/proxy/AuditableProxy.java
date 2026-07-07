@@ -9,13 +9,6 @@ import java.lang.reflect.Method;
 
 /**
  * @Auditable 注解代理 — 拦截方法调用并记录审计日志.
- *
- * <pre>{@code
- * AuditableProxy.invoke(this, "deleteScore", () -> {
- *     doDelete(123L);
- *     return null;
- * });
- * }</pre>
  */
 public final class AuditableProxy {
 

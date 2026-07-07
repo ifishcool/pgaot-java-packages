@@ -1,5 +1,4 @@
 package com.pgaot.account.auth.exception;
-import lombok.Getter;
 
 import com.pgaot.account.auth.common.code.ErrorCode;
 import com.pgaot.account.auth.common.code.IResultCode;
@@ -12,7 +11,6 @@ import com.pgaot.account.auth.common.code.IResultCode;
  * throw LoginException.tokenInvalid("JWT 签名错误");
  * }</pre>
  */
-@Getter
 public class LoginException extends RuntimeException {
 
     private final int code;
@@ -68,4 +66,5 @@ public class LoginException extends RuntimeException {
     }
 
     /** 业务错误码 */
+    public int getCode() { return code; }
 }

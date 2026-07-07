@@ -1,6 +1,5 @@
 package com.pgaot.web.controller;
 
-import com.pgaot.account.auth.api.model.LoginUser;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;

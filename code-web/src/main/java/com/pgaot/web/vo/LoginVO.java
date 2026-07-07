@@ -5,17 +5,17 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(description = "登录响应")
 public class LoginVO {
     @Schema(description = "访问令牌")
-    private String accessToken;
+    private final String accessToken;
     @Schema(description = "刷新令牌")
-    private String refreshToken;
+    private final String refreshToken;
     @Schema(description = "用户 ID")
-    private String userId;
+    private final String userId;
     @Schema(description = "昵称")
-    private String nickname;
+    private final String nickname;
     @Schema(description = "头像")
-    private String avatar;
+    private final String avatar;
     @Schema(description = "邮箱")
-    private String email;
+    private final String email;
 
     public LoginVO(String accessToken, String refreshToken, String userId,
                    String nickname, String avatar, String email) {

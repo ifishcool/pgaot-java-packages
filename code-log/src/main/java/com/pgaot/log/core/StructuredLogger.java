@@ -1,6 +1,5 @@
 package com.pgaot.log.core;
 
-import com.pgaot.log.api.LogContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

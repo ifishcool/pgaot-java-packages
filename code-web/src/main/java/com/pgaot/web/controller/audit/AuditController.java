@@ -34,21 +34,21 @@ public class AuditController extends BaseController {
 
     @Operation(summary = "按用户查询审计日志")
     @GetMapping("/user/{userId}")
-    public ApiResponse<List<AuditLogEntity>> listByUser(@PathVariable("userId") String userId,
+    public ApiResponse<List<AuditLogEntity>> listByUser(@PathVariable String userId,
                                                          @RequestParam(name = "limit", defaultValue = "100") int limit) {
         return ApiResponse.ok(repo().listByUser(userId, limit));
     }
 
     @Operation(summary = "按表查询审计日志")
     @GetMapping("/table/{tableName}")
-    public ApiResponse<List<AuditLogEntity>> listByTable(@PathVariable("tableName") String tableName,
+    public ApiResponse<List<AuditLogEntity>> listByTable(@PathVariable String tableName,
                                                           @RequestParam(name = "limit", defaultValue = "50") int limit) {
         return ApiResponse.ok(repo().listByTable(tableName, limit));
     }
 
     @Operation(summary = "按 traceId 查询审计日志")
     @GetMapping("/trace/{traceId}")
-    public ApiResponse<List<AuditLogEntity>> listByTraceId(@PathVariable("traceId") String traceId) {
+    public ApiResponse<List<AuditLogEntity>> listByTraceId(@PathVariable String traceId) {
         return ApiResponse.ok(repo().listByTraceId(traceId));
     }
 }

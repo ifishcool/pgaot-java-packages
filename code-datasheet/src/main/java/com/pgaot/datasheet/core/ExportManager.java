@@ -87,7 +87,7 @@ public class ExportManager {
         String c = (cols != null && !cols.isEmpty()) ? String.join(", ", cols) : "*";
         String fullSql = "SELECT " + c + " FROM " + physical;
         if (where != null && !where.isBlank()) fullSql += " WHERE " + where;
-        List<Map<String, Object>> rows = (List<Map<String, Object>>) sql.sql(fullSql);
+        List<Map<String, Object>> rows = sql.sql(fullSql);
         if (rows.size() > DatasheetConstants.MAX_EXPORT_ROWS)
             throw DatasheetException.rowValidationFailed("max export rows: " + DatasheetConstants.MAX_EXPORT_ROWS);
         return rows;

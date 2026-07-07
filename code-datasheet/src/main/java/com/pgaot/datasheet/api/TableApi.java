@@ -6,9 +6,10 @@ import com.pgaot.datasheet.exception.DatasheetException;
 import com.pgaot.datasheet.metadata.MetadataStore;
 import com.pgaot.datasheet.metadata.entity.ShareEntity;
 import com.pgaot.datasheet.metadata.entity.TableEntity;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -94,20 +95,12 @@ public class TableApi {
         }).collect(Collectors.toList());
     }
 
-    /** 表 + 来源信息 */
+    @Getter @Setter
     public static class TableWithSource {
         private TableInfo tableInfo;
-        private String source;      // "OWNED" / "SHARED"
-        private String fromUser;    // 共享自谁（source=SHARED 时有值）
+        private String source;
+        private String fromUser;
         private SharePermission permission;
-        public TableInfo getTableInfo() { return tableInfo; }
-        public void setTableInfo(TableInfo v) { tableInfo = v; }
-        public String getSource() { return source; }
-        public void setSource(String v) { source = v; }
-        public String getFromUser() { return fromUser; }
-        public void setFromUser(String v) { fromUser = v; }
-        public SharePermission getPermission() { return permission; }
-        public void setPermission(SharePermission v) { permission = v; }
     }
 
     // === helpers ===

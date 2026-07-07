@@ -2,7 +2,6 @@ package com.pgaot.web.aspect;
 
 import com.pgaot.account.auth.api.LoginEntry;
 import com.pgaot.account.auth.api.model.LoginUser;
-import com.pgaot.web.annotation.RequiredAuth;
 import com.pgaot.web.annotation.RequiredScope;
 import jakarta.servlet.http.HttpServletRequest;
 import org.aspectj.lang.annotation.Aspect;
@@ -15,6 +14,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 @Aspect
 @Component
 @Order(1)
+
 public class AuthAspect {
 
     @Before("@within(com.pgaot.web.annotation.RequiredAuth) || " +
@@ -33,13 +33,15 @@ public class AuthAspect {
     public void checkScope(org.aspectj.lang.JoinPoint jp) {
         RequiredScope scope = getAnnotation(jp, RequiredScope.class);
         if (scope == null) return;
-        String apiKey = getRequest().getHeader("X-API-Key");
+        HttpServletRequest req = getRequest();
+        String apiKey = req != null ? req.getHeader("X-API-Key") : null;
         if (apiKey == null) throw new AuthException(401, "缺少 API Key");
         LoginEntry.tokens().validate(apiKey, scope.value());
     }
 
     private String extractBearer() {
-        String h = getRequest().getHeader("Authorization");
+        HttpServletRequest req = getRequest();
+        String h = req != null ? req.getHeader("Authorization") : null;
         return (h != null && h.startsWith("Bearer ")) ? h.substring(7) : null;
     }
 

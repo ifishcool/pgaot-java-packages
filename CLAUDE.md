@@ -163,7 +163,7 @@ Requires 8 GitHub Secrets: `GH_PACKAGES_TOKEN`, `YUNTOWER_APP_ID`, `YUNTOWER_APP
 - **Model naming**: `param/` for request DTOs, `vo/` for response VOs, organized by business domain.
 - **Swagger**: Knife4j at `/doc.html`.
 - **Controllers**: `auth/AuthController`, `datasheet/TableController`, `datasheet/DataController`, `audit/AuditController`.
-- **Dependency**: code-auth + code-datasheet + code-log, Spring Boot 3.4, Knife4j 4.5.
+- **Dependency**: code-auth + code-datasheet + code-log, Spring Boot 3.4.4, Knife4j 4.5.
 
 ## Documentation
 
@@ -175,4 +175,4 @@ Requires 8 GitHub Secrets: `GH_PACKAGES_TOKEN`, `YUNTOWER_APP_ID`, `YUNTOWER_APP
 - **code-sql**: druid 1.2.28, spring-jdbc 6.2.1, hibernate-core 6.6.4, mysql-connector-j 9.7.0, lombok 1.18.46 (provided), JUnit 5.11.4 (test)
 - **code-datasheet**: code-sql 1.0.0, jackson-databind 2.22.0, jackson-dataformat-csv 2.22.0, lombok 1.18.46 (provided)
 - **code-log**: code-sql 1.0.0, slf4j-api 2.0.17, lombok 1.18.46 (provided), JUnit 5.11.4 (test)
-- **code-web**: code-auth + code-datasheet + code-log 1.0.0, Spring Boot 3.4, Knife4j 4.5
+- **code-web**: code-auth + code-datasheet + code-log 1.0.0, Spring Boot 3.4.4, Knife4j 4.5

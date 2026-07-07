@@ -13,11 +13,11 @@ import com.pgaot.log.api.LogContext;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiResponse<T> {
 
-    private int code;
-    private String message;
+    private final int code;
+    private final String message;
     @JsonInclude(JsonInclude.Include.ALWAYS)
-    private T data;
-    private String traceId;
+    private final T data;
+    private final String traceId;
 
     private ApiResponse(int code, String message, T data) {
         this.code = code;
